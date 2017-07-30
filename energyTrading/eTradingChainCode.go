@@ -289,14 +289,14 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
 		if err1 != nil {
 			return nil, err1
 		}
-		//more can be added
-		returnMessage = "Retrieved Credentials are " + userSample.LoginID + " " + userSample.UserType + " " + userSample.CompanyName + " " + userSample.CompanyLocation +
-		" " + strconv.Itoa(userSample.BankAccountNum) + " " + strconv.FormatFloat(userSample.BankBalance, 'f', -1, 64)
-		//return userInfo, nil
-		return userInfo, nil
+		
+		//TODO: Need to check if the password is matching
+		
+		var output = {statusCode : "SUCCESS", body : userInfo};
+		return output, nil
 	} else {
-		returnMessage = "Not authorized to get access"
-		return []byte(returnMessage), nil
+		var output = {statusCode : "FAIL", body : "Invalid user."};
+		return output, nil
 	}
 	return nil, nil
 
