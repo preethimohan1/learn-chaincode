@@ -292,11 +292,11 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
 		
 		//TODO: Need to check if the password is matching
 		
-		var output = "{statusCode : 'SUCCESS', body :"+ userInfo + "}";
-		return []byte(output), nil
+		var returnMessage = "{statusCode : \"SUCCESS\", body :" + userInfo + "}"
+		return []byte(returnMessage), nil
 	} else {
-		var output = "{statusCode : 'FAIL', body : 'Invalid user.'}";
-		return []byte(output), nil
+		var returnMessage = "{statusCode : \"FAIL\", body : \"Invalid user.\"}"
+		return []byte(returnMessage), nil
 	}
 	return nil, nil
 
