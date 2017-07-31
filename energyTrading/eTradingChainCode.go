@@ -94,7 +94,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	} else if function == "register" {
 		return t.register(stub, args)
 	} else if function == "createTradeRequest" {
-		return t.makeTradeRequest(stub, args)
+		return t.createTradeRequest(stub, args)
 	}
  
 	fmt.Println("Invoke did not find function:" + function)
