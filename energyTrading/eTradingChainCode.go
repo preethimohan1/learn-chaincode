@@ -160,6 +160,8 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 }
 
 func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("Inside register()")
+	
 	var userName, userType, compName, compLoc, password, mapName string
 	var bankAccountNum int
 	var bankBalance float64
@@ -196,6 +198,7 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
     
 	//ADDING USER TO CORRESPONDING MAP
     mapName = strings.ToLower(userType) + "InfoMap"
+	fmt.Println("mapName=" + mapName)
     userMapObj, _ := stub.GetState(mapName)
     _ = json.Unmarshal(userMapObj, &userMap)
     userMap[userName] = userObjBytes
