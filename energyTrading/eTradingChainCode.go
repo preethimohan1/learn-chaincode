@@ -65,7 +65,6 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	
 	//create Maps for Each Type of User
 	producerInfoMap := make(map[string]*[]byte)
-	producerInfoMap[testUserName] = &userObjBytes //adding testUser
 	producerInfoMapBytes, _ := json.Marshal(producerInfoMap)
 	shipperInfoMap := make(map[string]*[]byte)
 	shipperInfoMapBytes, _ := json.Marshal(shipperInfoMap)
