@@ -425,7 +425,7 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
 		tradeRequestProducerMap = make(map[string][]byte)
 		tradeRequestProducerMap[tradeRequestIDString] = tradeRequestObjBytes
 		tradeRequestProducerMapObjBytes, _ = json.Marshal(&tradeRequestProducerMap)
-		_ = stub.PutState(shipperID + "TradeRequestProducerMap", tradeRequestProducerMapObjBytes)
+		_ = stub.PutState(producerID + "TradeRequestProducerMap", tradeRequestProducerMapObjBytes)
 	} else {
 		_ = json.Unmarshal(tradeRequestProducerMapObjBytes, &tradeRequestProducerMap)
 		tradeRequestProducerMap[tradeRequestIDString] = tradeRequestObjBytes
