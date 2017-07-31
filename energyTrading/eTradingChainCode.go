@@ -160,7 +160,6 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 }
 
 func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	fmt.Println("Inside register()")
 	
 	var userName, userType, compName, compLoc, password, mapName string
 	var bankAccountNum int
@@ -197,13 +196,12 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 	} 
     
 	//ADDING USER TO CORRESPONDING MAP
-    mapName = strings.ToLower(userType) + "InfoMap"
-	fmt.Println("mapName=" + mapName)
-    userMapObj, _ := stub.GetState(mapName)
-    _ = json.Unmarshal(userMapObj, &userMap)
-    userMap[userName] = userObjBytes
-    userMapObj,_ = json.Marshal(&userMap)
-    _ = stub.PutState(mapName, userMapObj)   
+    	mapName = strings.ToLower(userType) + "InfoMap"
+    	userMapObj, _ := stub.GetState(mapName)
+    	_ = json.Unmarshal(userMapObj, &userMap)
+    	userMap[userName] = userObjBytes
+    	userMapObj,_ = json.Marshal(&userMap)
+    	_ = stub.PutState(mapName, userMapObj)   
 	
 
 	//CREATING USER LOGIN STRUCT WITH LOGIN INFO
@@ -385,7 +383,7 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
 	entryLocation = args[5]
 	tradeRequestStartDate = args[6]
 	tradeRequestEndDate = args[7]
-	tradeRequestStatus = "Processing"	
+	tradeRequestStatus = "New"	
 	tradeRequestInvoiceID = 0
 	tradeRequestIncidentID = 0
 
