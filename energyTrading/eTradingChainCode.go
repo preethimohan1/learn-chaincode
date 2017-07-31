@@ -127,7 +127,10 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.write(stub, args)
 	} else if function == "register" {
 		return t.register(stub, args)
-	} 
+	} else if function == "makeTradeRequest" {
+		return t.makeTradeRequest(stub, args)
+	}
+ 
 
 	fmt.Println("Invoke did not find func:" + function)
 
@@ -147,6 +150,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.getUserInfo(stub, args)
 	} else if function == "returnProducers" {
 		return t.returnProducers(stub)
+	} else if function == "returnTradeRequest" {
+		return t.returnTradeRequest(stub, args)
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -185,7 +190,6 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
         jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
         return nil, errors.New(jsonResp)
     }
-
     return valAsbytes, nil
 }
 
@@ -196,7 +200,7 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 
 	var userObj user	
 	var userLoginObj userLogin
-	var userMap map[string]*[]byte
+	var userMap map[string][]byte
 	fmt.Println("Running function Register")
 
 	if len (args) != 7 {
@@ -227,25 +231,25 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 	if userType == "Producer" {
 		userMapObj, _ := stub.GetState("producerInfoMap")
 		_ = json.Unmarshal(userMapObj, &userMap)
-		userMap[userName] = &userObjBytes
+		userMap[userName] = userObjBytes
 		userMapObj,_ = json.Marshal(&userMap)
 		_ = stub.PutState("producerInfoMap", userMapObj)
 	} else if userType == "Shipper" {
 		userMapObj, _ := stub.GetState("shipperInfoMap")
 		_ = json.Unmarshal(userMapObj, &userMap)
-		userMap[userName] = &userObjBytes
+		userMap[userName] = userObjBytes
 		userMapObj,_ = json.Marshal(&userMap)
 		_ = stub.PutState("shipperInfoMap", userMapObj)	
 	} else if userType == "Buyer" {
 		userMapObj, _ := stub.GetState("buyerInfoMap")
 		_ = json.Unmarshal(userMapObj, &userMap)
-		userMap[userName] = &userObjBytes
+		userMap[userName] = userObjBytes
 		userMapObj,_ = json.Marshal(&userMap)
 		_ = stub.PutState("buyerInfoMap", userMapObj)	
 	} else if userType == "Transporter" {
 		userMapObj, _ := stub.GetState("transporterInfoMap")
 		_ = json.Unmarshal(userMapObj, &userMap)
-		userMap[userName] = &userObjBytes
+		userMap[userName] = userObjBytes
 		userMapObj,_ = json.Marshal(&userMap)
 		_ = stub.PutState("transporterInfoMap", userMapObj)	
 	} 
@@ -293,7 +297,8 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
 		returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" :" + string(userInfo) + "}"
 		return []byte(returnMessage), nil
 	} else {
-		returnMessage = "{\"statusCode\" : \"FAIL\", \"body\" : \"Invalid user.\"}"
+		//returnMessage = "Not authorized to get access"
+		returnMessage = "{\"statusCode\" : \"FAIL\", \"body\" : \"Error: Invalid user!\"}"
 		return []byte(returnMessage), nil
 	}
 	return nil, nil
@@ -334,20 +339,26 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 }
 
 func (t *SimpleChaincode) returnProducers(stub shim.ChaincodeStubInterface) ([]byte, error) {
-	var userSample user
+	//var userSample user
+	var lenMap int
 
 	mapProducerInfo := make(map[string][]byte)
 	var returnMessage string
 	fmt.Println("Running returning Producers")
 	mapProducerInfoBytes, _ := stub.GetState("producerInfoMap")
 	_ = json.Unmarshal(mapProducerInfoBytes, &mapProducerInfo)
-	returnMessage = ""
-	for k, v := range mapProducerInfo {
-		_ = json.Unmarshal(v, &userSample)
-		returnMessage = returnMessage + k + " " + userSample.UserType + " " + userSample.CompanyName + " " + userSample.CompanyLocation +
-		" " + strconv.Itoa(userSample.BankAccountNum) + " " + strconv.FormatFloat(userSample.BankBalance, 'f', -1, 64)
-		returnMessage = returnMessage + "\n"
+	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
+	lenMap = len(mapProducerInfo)
+	for k, _ := range mapProducerInfo {
+		
+		userStructInfo, _ := stub.GetState(k)
+		returnMessage = returnMessage + string(userStructInfo) 
+		lenMap = lenMap - 1 
+		if (lenMap != 0) {
+			returnMessage = returnMessage + ","
+		} 
 	} 
+	returnMessage = returnMessage + "]}"
 	return []byte(returnMessage), nil
 
 }
@@ -402,24 +413,25 @@ func (t *SimpleChaincode) updateUserInfo(stub shim.ChaincodeStubInterface, argsU
 	return nil, nil
 }
 
-/*func (t *SimpleChaincode) makeTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-	var shipperID, producerID, entryLocation, tradeRequestStartDate, tradeRequestEndDate string
-	var tradeRequestID int
+func (t *SimpleChaincode) makeTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+	var shipperID, tradeRequestIDString, producerID, entryLocation, tradeRequestStartDate, tradeRequestEndDate, tradeRequestStatus string
+	var tradeRequestID, tradeRequestInvoiceID, tradeRequestIncidentID int
 	var energyKWH, gasPrice float64
 	var tradeRequestObj tradeRequest
 
-	var tradeRequestShipperMap map[string]*[]byte
-	var tradeRequestProducerMap map[string]*[]byte
+	var tradeRequestShipperMap map[string][]byte
+	var tradeRequestProducerMap map[string][]byte
 
 	if len(args) != 8 {
 		return nil, errors.New("Incorrect number of arguments. 8 expected")
 	}
 
-	tradeRequestID = args[0]
+	tradeRequestIDString = args[0]
+	tradeRequestID, _ = strconv.Atoi(args[0])
 	shipperID = args[1]
 	producerID = args[2]
-	energyKWH = args[3]
-	gasPrice = args[4]
+	energyKWH, _ = strconv.ParseFloat(args[3], 64)
+	gasPrice, _ = strconv.ParseFloat(args[4], 64)
 	entryLocation = args[5]
 	tradeRequestStartDate = args[6]
 	tradeRequestEndDate = args[7]
@@ -433,11 +445,11 @@ func (t *SimpleChaincode) updateUserInfo(stub shim.ChaincodeStubInterface, argsU
 	TradeRequestIncidentID: tradeRequestIncidentID}
 
 	//Putting on RocksDB database.
-	tradeRequestObjBytes, err1 := json.Marshal(tradeRequest)
+	tradeRequestObjBytes, err1 := json.Marshal(tradeRequestObj)
 	if err1 != nil {
 		return nil, err1
 	}
-	_ = stub.PutState(tradeRequestID, tradeRequestObjBytes)
+	_ = stub.PutState(tradeRequestIDString, tradeRequestObjBytes)
 
 	//Putting in Maps for Shipper
 	tradeRequestShipperMapObjBytes, err2 := stub.GetState(shipperID + "TradeRequestShipperMap")
@@ -445,13 +457,13 @@ func (t *SimpleChaincode) updateUserInfo(stub shim.ChaincodeStubInterface, argsU
 		return nil, err2
 	}
 	if tradeRequestShipperMapObjBytes == nil {
-		tradeRequestShipperMap = make(map[string]*[]byte)
-		tradeRequestShipperMap[tradeRequestID] = &tradeRequestObj
+		tradeRequestShipperMap = make(map[string][]byte)
+		tradeRequestShipperMap[tradeRequestIDString] = tradeRequestObjBytes
 		tradeRequestShipperMapObjBytes, _ = json.Marshal(&tradeRequestShipperMap)
 		_ = stub.PutState(shipperID + "TradeRequestShipperMap", tradeRequestShipperMapObjBytes)
 	} else {
-		_ = json.Unmarshal(tradeRequestShipperObjBytes, &tradeRequestShipperMap)
-		tradeRequestShipperMap[tradeRequestID] = &tradeRequestObj
+		_ = json.Unmarshal(tradeRequestShipperMapObjBytes, &tradeRequestShipperMap)
+		tradeRequestShipperMap[tradeRequestIDString] = tradeRequestObjBytes
 		tradeRequestShipperMapObjBytes, _ = json.Marshal(&tradeRequestShipperMap)
 		_ = stub.PutState(shipperID + "TradeRequestShipperMap", tradeRequestShipperMapObjBytes)
 	}
@@ -461,20 +473,28 @@ func (t *SimpleChaincode) updateUserInfo(stub shim.ChaincodeStubInterface, argsU
 	if err3 != nil {
 		return nil, err3
 	}
-	if tradeRequestProdcuerMapObjBytes == nil {
-		tradeRequestProducerMap = make(map[string]*[]byte)
-		tradeRequestProducerMap[tradeRequestID] = &tradeRequestObj
+	if tradeRequestProducerMapObjBytes == nil {
+		tradeRequestProducerMap = make(map[string][]byte)
+		tradeRequestProducerMap[tradeRequestIDString] = tradeRequestObjBytes
 		tradeRequestProducerMapObjBytes, _ = json.Marshal(&tradeRequestProducerMap)
 		_ = stub.PutState(shipperID + "TradeRequestProducerMap", tradeRequestProducerMapObjBytes)
 	} else {
-		_ = json.Unmarshal(tradeRequestProducerObjBytes, &tradeRequestProducerMap)
-		tradeRequestProducerMap[tradeRequestID] = &tradeRequestObj
+		_ = json.Unmarshal(tradeRequestProducerMapObjBytes, &tradeRequestProducerMap)
+		tradeRequestProducerMap[tradeRequestIDString] = tradeRequestObjBytes
 		tradeRequestProducerMapObjBytes, _ = json.Marshal(&tradeRequestProducerMap)
 		_ = stub.PutState(producerID + "TradeRequestProducerMap", tradeRequestProducerMapObjBytes)
 	}
 
 	return nil, nil
-}*/
+}
+
+func (t *SimpleChaincode) returnTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+	var tradeRequestID string
+	
+	tradeRequestID = args[0]
+	tradeRequestObjBytes, _ := stub.GetState(tradeRequestID)
+	return []byte(string(tradeRequestObjBytes)), nil
+}
 
 func testEqualSlice (a []byte, b []byte) bool {
 
