@@ -527,19 +527,20 @@ func addTestUser (infoMap map[string]*[]byte, testUserName string, testUserType 
 	CompanyLocation: testCompLoc, BankAccountNum: testBankAccountNum, BankBalance: testBankBalance}
 	userObjBytes, err := json.Marshal(&testUser)
 	if err != nil {
-		return nil, err
+		fmt.Println("Failed to marshal test user:" + err)
+		return false
 	}
 
 	err1 := stub.PutState(testUserName, userObjBytes)
 	if err1 != nil {
-		fmt.Println("Failed to save User Details. UserObj")
+		fmt.Println("Failed to save test user:" + err1)
 	}
 
 	testUserLogin =	userLogin{LoginName: testUserName, Password: testPassword} 
 	userObjLoginBytes, err := json.Marshal(&testUserLogin)
 	err2 := stub.PutState(loginPrefix + testUserName, userObjLoginBytes)
 	if err2 != nil {
-		fmt.Println("Failed to save user credentials. UserLoginObj")
+		fmt.Println("Failed to save test user credentials" + err2)
 	}
     
     	infoMap[testUserName] = &userObjBytes
