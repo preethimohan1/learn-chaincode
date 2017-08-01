@@ -476,14 +476,15 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
 }
 
 func (t *SimpleChaincode) updateTradeRequestStatus(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+	var tradeRequestIDString string
 	var tradeRequestObj tradeRequest
 	
 	if len(args) < 2 {
 		return nil, errors.New("Incorrect number of arguments. 2 expected (TradeRequestID and TradeRequestStatus)")
 	}
 	
-	tradeRequestID = args[0]
-	tradeRequestObjBytes, _ := stub.GetState(tradeRequestID)
+	tradeRequestIDString = args[0]
+	tradeRequestObjBytes, _ := stub.GetState(tradeRequestIDString)
 	err1 := json.Unmarshal(tradeRequestObjBytes, &tradeRequestObj)
 	if err1 != nil {
 		return nil, err1
