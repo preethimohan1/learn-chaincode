@@ -529,20 +529,20 @@ func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoMap
 	CompanyLocation: testCompLoc, BankAccountNum: testBankAccountNum, BankBalance: testBankBalance}
 	userObjBytes, err := json.Marshal(&testUser)
 	if err != nil {
-		fmt.Println("Failed to marshal test user:" + err)
+		fmt.Println(err)
 		return false
 	}
 
 	err1 := stub.PutState(testUserName, userObjBytes)
 	if err1 != nil {
-		fmt.Println("Failed to save test user:" + err1)
+		fmt.Println(err1)
 	}
 
 	testUserLogin =	userLogin{LoginName: testUserName, Password: testPassword} 
 	userObjLoginBytes, err := json.Marshal(&testUserLogin)
 	err2 := stub.PutState(loginPrefix + testUserName, userObjLoginBytes)
 	if err2 != nil {
-		fmt.Println("Failed to save test user credentials" + err2)
+		fmt.Println(err2)
 	}
     
     	infoMap[testUserName] = &userObjBytes
