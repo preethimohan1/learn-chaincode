@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-    "strings"
+    	"strings"
 	//"time"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
@@ -518,7 +518,7 @@ func testEqualSlice (a []byte, b []byte) bool {
     return true
 }
 
-func newTestUser (infoMap map[string][]byte, testUserName string, testUserType string, testCompName string, testCompLoc string, testPassword string, testBankAccountNum int, testBankBalance float64 ) bool {
+func newTestUser (infoMap map[string]*[]byte, testUserName string, testUserType string, testCompName string, testCompLoc string, testPassword string, testBankAccountNum int, testBankBalance float64 ) bool {
 	
 	var testUser user
 	var testUserLogin userLogin
