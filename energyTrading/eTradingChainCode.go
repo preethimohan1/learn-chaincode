@@ -498,13 +498,14 @@ func (t *SimpleChaincode) updateTradeRequestStatus(stub shim.ChaincodeStubInterf
 	if err2 != nil {
 		return nil, err2
 	}
-	err3 := stub.PutState(tradeRequestID, tradeRequestBytes)
+	err3 := stub.PutState(tradeRequestIDString, tradeRequestBytes)
 	if err3 != nil {
 		return nil, err3
 	}
 	
 	return nil, nil;
 }
+
 /*func (t *SimpleChaincode) getTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
 	var tradeRequestID string
 	
