@@ -65,12 +65,19 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	
 	//create Maps for Each Type of User
 	producerInfoMap := make(map[string]*[]byte)
+    newTestUser(producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)
 	producerInfoMapBytes, _ := json.Marshal(producerInfoMap)
+    
 	shipperInfoMap := make(map[string]*[]byte)
+    newTestUser(shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
 	shipperInfoMapBytes, _ := json.Marshal(shipperInfoMap)
+    
 	buyerInfoMap := make(map[string]*[]byte)
+    newTestUser(buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
 	buyerInfoMapBytes, _ := json.Marshal(buyerInfoMap)
+    
 	transporterInfoMap := make(map[string]*[]byte)
+    newTestUser(transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
 	transporterInfoMapBytes, _ := json.Marshal(transporterInfoMap)
 
 	_ = stub.PutState("producerInfoMap", producerInfoMapBytes)
@@ -160,7 +167,6 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 }
 
 func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	
 	var userName, userType, compName, compLoc, password, mapName string
 	var bankAccountNum int
 	var bankBalance float64
@@ -205,7 +211,7 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 	
 
 	//CREATING USER LOGIN STRUCT WITH LOGIN INFO
-	userLoginObj = userLogin{LoginName: userName, Password: password}
+    	userLoginObj = userLogin{LoginName: userName, Password: password}
 	userLoginBytes, err1 := json.Marshal(&userLoginObj)
 	if err1 != nil {
 		fmt.Println("Failed to save user credentials. UserObj")
@@ -510,4 +516,32 @@ func testEqualSlice (a []byte, b []byte) bool {
         }
     }
     return true
+}
+
+func newTestUser (infoMap map[string][]byte, testUserName string, testUserType string, testCompName string, testCompLoc string, testPassword string, testBankAccountNum int, testBankBalance float64 ) bool {
+	
+	var testUser user
+	var testUserLogin userLogin
+
+	testUser = user{LoginID: testUserName, UserType: testUserType, CompanyName: testCompName, 
+	CompanyLocation: testCompLoc, BankAccountNum: testBankAccountNum, BankBalance: testBankBalance}
+	userObjBytes, err := json.Marshal(&testUser)
+	if err != nil {
+		return nil, err
+	}
+
+	err1 := stub.PutState(testUserName, userObjBytes)
+	if err1 != nil {
+		fmt.Println("Failed to save User Details. UserObj")
+	}
+
+	testUserLogin =	userLogin{LoginName: testUserName, Password: testPassword} 
+	userObjLoginBytes, err := json.Marshal(&testUserLogin)
+	err2 := stub.PutState(loginPrefix + testUserName, userObjLoginBytes)
+	if err2 != nil {
+		fmt.Println("Failed to save user credentials. UserLoginObj")
+	}
+    
+    	infoMap[testUserName] = &userObjBytes
+    	return true
 }
