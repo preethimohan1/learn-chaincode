@@ -518,7 +518,9 @@ func testEqualSlice (a []byte, b []byte) bool {
     return true
 }
 
-func addTestUser (stub shim.ChaincodeStubInterface, infoMap map[string]*[]byte, testUserName string, testUserType string, testCompName string, testCompLoc string, testPassword string, testBankAccountNum int, testBankBalance float64 ) bool {
+func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoMap map[string]*[]byte, testUserName string, 
+				       testUserType string, testCompName string, testCompLoc string, testPassword string, 
+				       testBankAccountNum int, testBankBalance float64 ) bool {
 	
 	var testUser user
 	var testUserLogin userLogin
