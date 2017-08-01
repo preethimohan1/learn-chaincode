@@ -89,6 +89,37 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 }
 
+func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoMap map[string]*[]byte, testUserName string, 
+				       testUserType string, testCompName string, testCompLoc string, testPassword string, 
+				       testBankAccountNum int, testBankBalance float64 ) bool {
+	
+	var testUser user
+	var testUserLogin userLogin
+
+	testUser = user{LoginID: testUserName, UserType: testUserType, CompanyName: testCompName, 
+	CompanyLocation: testCompLoc, BankAccountNum: testBankAccountNum, BankBalance: testBankBalance}
+	userObjBytes, err := json.Marshal(&testUser)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	err1 := stub.PutState(testUserName, userObjBytes)
+	if err1 != nil {
+		fmt.Println(err1)
+	}
+
+	testUserLogin =	userLogin{LoginName: testUserName, Password: testPassword} 
+	userObjLoginBytes, err := json.Marshal(&testUserLogin)
+	err2 := stub.PutState(loginPrefix + testUserName, userObjLoginBytes)
+	if err2 != nil {
+		fmt.Println(err2)
+	}
+    
+    	infoMap[testUserName] = &userObjBytes
+    	return true
+}
+
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("Running Invoke function")
@@ -101,6 +132,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.register(stub, args)
 	} else if function == "createTradeRequest" {
 		return t.createTradeRequest(stub, args)
+	} else if function == "updateTradeRequestStatus" {
+		return t.updateTradeRequestStatus(stub, args)
 	}
  
 	fmt.Println("Invoke did not find function:" + function)
@@ -442,6 +475,35 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
 	return nil, nil
 }
 
+func (t *SimpleChaincode) updateTradeRequestStatus(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+	var tradeRequestObj tradeRequest
+	
+	if len(args) < 2 {
+		return nil, errors.New("Incorrect number of arguments. 2 expected (TradeRequestID and TradeRequestStatus)")
+	}
+	
+	tradeRequestID = args[0]
+	tradeRequestObjBytes, _ := stub.GetState(tradeRequestID)
+	err1 := json.Unmarshal(tradeRequestObjBytes, &tradeRequestObj)
+	if err1 != nil {
+		return nil, err1
+	}
+	
+	//Update the status
+	tradeRequestObj.TradeRequestStatus = args[1];
+	
+	//Save the updated trade request
+	tradeRequestBytes, err2 := json.Marshal(&tradeRequestObj)
+	if err2 != nil {
+		return nil, err2
+	}
+	err3 := stub.PutState(tradeRequestID, tradeRequestBytes)
+	if err3 != nil {
+		return nil, err3
+	}
+	
+	return nil, nil;
+}
 /*func (t *SimpleChaincode) getTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
 	var tradeRequestID string
 	
@@ -518,33 +580,3 @@ func testEqualSlice (a []byte, b []byte) bool {
     return true
 }
 
-func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoMap map[string]*[]byte, testUserName string, 
-				       testUserType string, testCompName string, testCompLoc string, testPassword string, 
-				       testBankAccountNum int, testBankBalance float64 ) bool {
-	
-	var testUser user
-	var testUserLogin userLogin
-
-	testUser = user{LoginID: testUserName, UserType: testUserType, CompanyName: testCompName, 
-	CompanyLocation: testCompLoc, BankAccountNum: testBankAccountNum, BankBalance: testBankBalance}
-	userObjBytes, err := json.Marshal(&testUser)
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-
-	err1 := stub.PutState(testUserName, userObjBytes)
-	if err1 != nil {
-		fmt.Println(err1)
-	}
-
-	testUserLogin =	userLogin{LoginName: testUserName, Password: testPassword} 
-	userObjLoginBytes, err := json.Marshal(&testUserLogin)
-	err2 := stub.PutState(loginPrefix + testUserName, userObjLoginBytes)
-	if err2 != nil {
-		fmt.Println(err2)
-	}
-    
-    	infoMap[testUserName] = &userObjBytes
-    	return true
-}
