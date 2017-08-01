@@ -65,19 +65,19 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	
 	//create Maps for Each Type of User
 	producerInfoMap := make(map[string]*[]byte)
-    newTestUser(producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)
+    	addTestUser(producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)
 	producerInfoMapBytes, _ := json.Marshal(producerInfoMap)
     
 	shipperInfoMap := make(map[string]*[]byte)
-    newTestUser(shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
+    	addTestUser(shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
 	shipperInfoMapBytes, _ := json.Marshal(shipperInfoMap)
     
 	buyerInfoMap := make(map[string]*[]byte)
-    newTestUser(buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
+    	addTestUser(buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
 	buyerInfoMapBytes, _ := json.Marshal(buyerInfoMap)
     
 	transporterInfoMap := make(map[string]*[]byte)
-    newTestUser(transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
+    	addTestUser(transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
 	transporterInfoMapBytes, _ := json.Marshal(transporterInfoMap)
 
 	_ = stub.PutState("producerInfoMap", producerInfoMapBytes)
@@ -518,7 +518,7 @@ func testEqualSlice (a []byte, b []byte) bool {
     return true
 }
 
-func newTestUser (infoMap map[string]*[]byte, testUserName string, testUserType string, testCompName string, testCompLoc string, testPassword string, testBankAccountNum int, testBankBalance float64 ) bool {
+func addTestUser (infoMap map[string]*[]byte, testUserName string, testUserType string, testCompName string, testCompLoc string, testPassword string, testBankAccountNum int, testBankBalance float64 ) bool {
 	
 	var testUser user
 	var testUserLogin userLogin
