@@ -59,146 +59,61 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     
 	//create Maps for Each Type of User
 	var producerInfoMap UserIDList
-    t.addTestUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)    
-	
+    t.addUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)	
     
 	var shipperInfoMap UserIDList
-    t.addTestUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
-	
-    
+    t.addUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
+	    
 	var buyerInfoMap UserIDList
-    t.addTestUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
-	
-    
+    t.addUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
+	    
 	var transporterInfoMap UserIDList
-    t.addTestUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
+    t.addUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
 
 	return nil, nil
-
 }
 
-func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr UserIDList, testUserName string, 
-				       testUserType string, testCompName string, testCompLoc string, testPassword string, 
-				       testBankAccountNum int, testBankBalance float64 ) bool {
+func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr UserIDList, userName string, 
+				       userType string, compName string, compLoc string, password string, 
+				       bankAccountNum int, bankBalance float64 ) bool {
 	
-	var testUser user
-	var testUserLogin userLogin
+	var newUser user
+	var newUserLogin userLogin
 
-	testUser = user{LoginID: testUserName, UserType: testUserType, CompanyName: testCompName, 
-	CompanyLocation: testCompLoc, BankAccountNum: testBankAccountNum, BankBalance: testBankBalance}
-	userObjBytes, err := json.Marshal(&testUser)
+	newUser = user{LoginID: userName, UserType: userType, CompanyName: compName, 
+	CompanyLocation: compLoc, BankAccountNum: bankAccountNum, BankBalance: bankBalance}
+	userObjBytes, err := json.Marshal(&newUser)
 	if err != nil {
 		fmt.Println(err)
 		return false
 	}
 
-	err1 := stub.PutState(testUserName, userObjBytes)
+	err1 := stub.PutState(userName, userObjBytes)
 	if err1 != nil {
 		fmt.Println(err1)
 	}
 
-	testUserLogin =	userLogin{LoginName: testUserName, Password: testPassword} 
-	userObjLoginBytes, err := json.Marshal(&testUserLogin)
-	err2 := stub.PutState(loginPrefix + testUserName, userObjLoginBytes)
+	newUserLogin =	userLogin{LoginName: userName, Password: password} 
+	userObjLoginBytes, err := json.Marshal(&newUserLogin)
+	err2 := stub.PutState(loginPrefix + userName, userObjLoginBytes)
 	if err2 != nil {
 		fmt.Println(err2)
 	}
         
     //Add the user IDs into array of user types
-    var mapName = strings.ToLower(testUserType) + "InfoMap"
-    infoArr = append(infoArr, testUserName)
-    infoMapBytes, _ := json.Marshal(infoArr)
+    var mapName = strings.ToLower(userType) + "InfoMap"
+    userIDArr = append(userIDArr, userName)
+    infoMapBytes, _ := json.Marshal(userIDArr)
     _ = stub.PutState(mapName, infoMapBytes)      
     
     	return true
 }
-
-// Invoke isur entry point to invoke a chaincode function
-func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	fmt.Println("Running Invoke function")
-
-	if function == "init" {
-		return t.Init(stub, "init", args)
-	} else if function == "write" {
-		return t.write(stub, args)
-	} else if function == "register" {
-		return t.register(stub, args)
-	} else if function == "createTradeRequest" {
-		return t.createTradeRequest(stub, args)
-	}
- 
-	fmt.Println("Invoke did not find function:" + function)
-
-	return nil, errors.New("Received unknown function invocation: " + function)
-}
-
-// Query is our entry point for queries
-func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-    fmt.Println("Querying function: " + function)
-
-	// Handle different functions
-	if function == "read" { //read a variable
-		return t.read(stub, args)
-	} else if function == "verifyUser" {
-		return t.verifyUser(stub, args)
-	} else if function == "getUserInfo" {
-		return t.getUserInfo(stub, args)
-	} else if function == "getProducerList" {
-		return t.getProducerList(stub)
-	} else if function == "getProducerTradeRequestList" {
-		return t.getProducerTradeRequestList(stub, args)
-	} else if function == "getShipperTradeRequestList" {
-		return t.getShipperTradeRequestList(stub, args)
-	}
-	fmt.Println("Query did not find func: " + function)
-
-	return nil, errors.New("Received unknown function query: " + function)
-}
-
-func (t *SimpleChaincode) write(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var key, value string
-	var err error
-	fmt.Println("Running write()")
-
-	if len(args) != 2 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 2. name of the key and value to set")
-	}
-
-	key = args[0]                            //rename for fun
-	value = args[1]
-	err = stub.PutState(key, []byte(value))  //write the variable into the chaincode state
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
-}
-
-func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var key, jsonResp string
-	var err error
-
-    if len(args) != 1 {
-        return nil, errors.New("Incorrect number of arguments. Expecting name of the key to query")
-    }
-
-    key = args[0]
-    valAsbytes, err := stub.GetState(key)
-    if err != nil {
-        jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
-        return nil, errors.New(jsonResp)
-    }
-    return valAsbytes, nil
-}
-
 func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var userName, userType, compName, compLoc, password, mapName string
 	var bankAccountNum int
 	var bankBalance float64
 
-	var userObj user	
-	var userLoginObj userLogin
-	//var userMap map[string][]byte
-    var userMap []string
+	var userMap UserIDList
 	fmt.Println("Running function Register")
 
 	if len (args) != 7 {
@@ -213,39 +128,12 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 	bankBalance, _ = strconv.ParseFloat(args[5], 64)
 	password = args[6]
 
-	//CREATING USER STRUCT WITH GENERAL INFO
-	userObj = user{LoginID: userName, UserType: userType, 
-	CompanyName: compName, CompanyLocation: compLoc, BankAccountNum: bankAccountNum, 
-	BankBalance: bankBalance}
-	userObjBytes, err := json.Marshal(&userObj)
-	if err != nil {
-		fmt.Println("Failed to save user credentials. UserObj")
-	}
-	err3 := stub.PutState(userName, userObjBytes)
-	if err3 != nil {
-		return nil, errors.New("Failed to save user credentials")
-	} 
-    
-	//ADDING USER TO CORRESPONDING MAP
-    	mapName = strings.ToLower(userType) + "InfoMap"
+    mapName = strings.ToLower(userType) + "InfoMap"
     	userMapObj, _ := stub.GetState(mapName)
     	_ = json.Unmarshal(userMapObj, &userMap)
-        userMap = append(userMap, userName)
-    	userMapObj,_ = json.Marshal(&userMap)
-    	_ = stub.PutState(mapName, userMapObj)   
-	
-
-	//CREATING USER LOGIN STRUCT WITH LOGIN INFO
-    	userLoginObj = userLogin{LoginName: userName, Password: password}
-	userLoginBytes, err1 := json.Marshal(&userLoginObj)
-	if err1 != nil {
-		fmt.Println("Failed to save user credentials. UserObj")
-	}
-
-	err2 := stub.PutState(loginPrefix + userName, userLoginBytes)
-	if err2 != nil {
-		fmt.Println("Failed to save user credentials. UserLoginObj")
-	}
+    
+    t.addUser (stub, userMap, userName, userType, compName, compLoc, password, bankAccountNum, bankBalance )
+    	
 	return nil, nil
 
 }
@@ -331,9 +219,8 @@ func (t *SimpleChaincode) getProducerList(stub shim.ChaincodeStubInterface) ([]b
 	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
 	lenMap = len(mapProducerInfo)
 	for _, k := range mapProducerInfo {
-		fmt.Println(k)
 		userStructInfo, _ := stub.GetState(k)
-        fmt.Println(string(userStructInfo))
+        
 		returnMessage = returnMessage + string(userStructInfo) 
 		lenMap = lenMap - 1 
 		if (lenMap != 0) {
@@ -574,4 +461,82 @@ func testEqualSlice (a []byte, b []byte) bool {
         }
     }
     return true
+}
+
+
+// Invoke isur entry point to invoke a chaincode function
+func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	fmt.Println("Running Invoke function")
+
+	if function == "init" {
+		return t.Init(stub, "init", args)
+	} else if function == "write" {
+		return t.write(stub, args)
+	} else if function == "register" {
+		return t.register(stub, args)
+	} else if function == "createTradeRequest" {
+		return t.createTradeRequest(stub, args)
+	}
+ 
+	fmt.Println("Invoke did not find function:" + function)
+
+	return nil, errors.New("Received unknown function invocation: " + function)
+}
+
+// Query is our entry point for queries
+func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+    fmt.Println("Querying function: " + function)
+
+	// Handle different functions
+	if function == "read" { //read a variable
+		return t.read(stub, args)
+	} else if function == "verifyUser" {
+		return t.verifyUser(stub, args)
+	} else if function == "getUserInfo" {
+		return t.getUserInfo(stub, args)
+	} else if function == "getProducerList" {
+		return t.getProducerList(stub)
+	} else if function == "getProducerTradeRequestList" {
+		return t.getProducerTradeRequestList(stub, args)
+	} else if function == "getShipperTradeRequestList" {
+		return t.getShipperTradeRequestList(stub, args)
+	}
+	fmt.Println("Query did not find func: " + function)
+
+	return nil, errors.New("Received unknown function query: " + function)
+}
+
+func (t *SimpleChaincode) write(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var key, value string
+	var err error
+	fmt.Println("Running write()")
+
+	if len(args) != 2 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 2. name of the key and value to set")
+	}
+
+	key = args[0]                            //rename for fun
+	value = args[1]
+	err = stub.PutState(key, []byte(value))  //write the variable into the chaincode state
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var key, jsonResp string
+	var err error
+
+    if len(args) != 1 {
+        return nil, errors.New("Incorrect number of arguments. Expecting name of the key to query")
+    }
+
+    key = args[0]
+    valAsbytes, err := stub.GetState(key)
+    if err != nil {
+        jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
+        return nil, errors.New(jsonResp)
+    }
+    return valAsbytes, nil
 }
