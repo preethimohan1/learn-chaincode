@@ -97,9 +97,9 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
     var userSample user
     userInfo, err := stub.GetState(userName)
     fmt.Println(userInfo)
-    err1 := json.Unmarshal(userInfo, &userSample)
-		if err1 != nil {
-			return nil, err1
+    err3 := json.Unmarshal(userInfo, &userSample)
+		if err3 != nil {
+			return nil, err3
 		}
     
     fmt.Println(userSample)
