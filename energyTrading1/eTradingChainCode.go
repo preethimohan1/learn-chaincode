@@ -99,7 +99,7 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
     fmt.Println(userInfo)
     err3 := json.Unmarshal(userInfo, &userSample)
 		if err3 != nil {
-			return nil, err3
+			fmt.Println(err3)
 		}
     
     fmt.Println(userSample)
