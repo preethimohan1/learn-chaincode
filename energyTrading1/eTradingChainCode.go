@@ -502,8 +502,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.verifyUser(stub, args)
 	} else if function == "getUserInfo" {
 		return t.getUserInfo(stub, args)
-	} else if function == "getProducerList" {
-		return t.getProducerList(stub)
+	} else if function == "getUserList" {
+		return t.getUserList(stub, args)
 	} else if function == "getProducerTradeRequestList" {
 		return t.getProducerTradeRequestList(stub, args)
 	} else if function == "getShipperTradeRequestList" {
