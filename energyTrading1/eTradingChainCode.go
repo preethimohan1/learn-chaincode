@@ -330,7 +330,7 @@ func (t *SimpleChaincode) getProducerList(stub shim.ChaincodeStubInterface) ([]b
 	//var userSample user
 	var lenMap int
 
-	mapProducerInfo := make([]string)
+	mapProducerInfo := make([]string, 10)
 	var returnMessage string
 	fmt.Println("Getting Producer List")
     mapProducerInfoBytes, _ := stub.GetState("producerInfoMap")
