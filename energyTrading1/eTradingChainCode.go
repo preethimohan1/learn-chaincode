@@ -61,24 +61,18 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	//create Maps for Each Type of User
 	var producerInfoMap userIDList
     t.addTestUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)    
-	//producerInfoMapBytes, _ := json.Marshal(producerInfoMap)
+	
     
 	var shipperInfoMap userIDList
     t.addTestUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
-	//shipperInfoMapBytes, _ := json.Marshal(shipperInfoMap)
+	
     
 	var buyerInfoMap userIDList
     t.addTestUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
-	//buyerInfoMapBytes, _ := json.Marshal(buyerInfoMap)
+	
     
 	var transporterInfoMap userIDList
     t.addTestUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
-	/*transporterInfoMapBytes, _ := json.Marshal(transporterInfoMap)
-
-	_ = stub.PutState("producerInfoMap", producerInfoMapBytes)
-	_ = stub.PutState("shipperInfoMap", shipperInfoMapBytes)
-	_ = stub.PutState("buyerInfoMap", buyerInfoMapBytes)
-_ = stub.PutState("transporterInfoMap", transporterInfoMapBytes)*/
 
 	return nil, nil
 
@@ -115,10 +109,18 @@ func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr
     var mapName = strings.ToLower(testUserType) + "InfoMap"
     infoArr.userIDs = append(infoArr.userIDs, testUserName)
     infoMapBytes, _ := json.Marshal(infoArr)
-    _ = stub.PutState(mapName, infoMapBytes)
+    _ = stub.PutState(mapName, infoMapBytes)    
     
     fmt.Println("Printing array in addTestUser()")
     fmt.Println(infoArr)
+    
+    var mapProducerInfo userIDList
+    mapProducerInfoBytes, _ := stub.GetState(mapName)
+	_ = json.Unmarshal(mapProducerInfoBytes, &mapProducerInfo)
+    
+    fmt.Println("Printing the map")
+    fmt.Println(&mapProducerInfo)
+    
     	return true
 }
 
