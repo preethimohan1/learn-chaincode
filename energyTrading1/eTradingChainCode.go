@@ -238,7 +238,7 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
     	mapName = strings.ToLower(userType) + "InfoMap"
     	userMapObj, _ := stub.GetState(mapName)
     	_ = json.Unmarshal(userMapObj, &userMap)
-        userMap := append(userMap, userName)
+        userMap = append(userMap, userName)
     	userMapObj,_ = json.Marshal(&userMap)
     	_ = stub.PutState(mapName, userMapObj)   
 	
