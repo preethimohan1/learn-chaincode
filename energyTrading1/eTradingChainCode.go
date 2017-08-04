@@ -335,6 +335,8 @@ func (t *SimpleChaincode) getProducerList(stub shim.ChaincodeStubInterface) ([]b
 	fmt.Println("Getting Producer List")
     mapProducerInfoBytes, _ := stub.GetState("producerInfoMap")
 	_ = json.Unmarshal(mapProducerInfoBytes, &mapProducerInfo)
+    fmt.Println("Printing the map")
+    fmt.Println(&mapProducerInfo)
 	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
 	lenMap = len(mapProducerInfo)
 	for _, k := range mapProducerInfo {
