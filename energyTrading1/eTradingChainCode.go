@@ -44,14 +44,9 @@ type tradeRequest struct {
 	TradeRequestIncidentID int
 }
 
-
-/*Maps for each type of user:
-	*producerInfoMap
-	*shipperInfoMap
-	*buyerInfoMap
-	*transporterInfoMap
-*/
-
+type userName struct {
+    name string
+}
 
 func main() {
 	err := shim.Start(new(SimpleChaincode))
@@ -64,20 +59,20 @@ func main() {
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
     
 	//create Maps for Each Type of User
-	//producerInfoMap := make(map[string]*[]byte)
-    producerInfoMap := make([]string, 10)
+	var producerInfoMap []userName
+    //producerInfoMap := make([]string, 10)
     	t.addTestUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)
 	producerInfoMapBytes, _ := json.Marshal(producerInfoMap)
     
-	shipperInfoMap := make([]string, 10)
+	var shipperInfoMap []userName
     	t.addTestUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
 	shipperInfoMapBytes, _ := json.Marshal(shipperInfoMap)
     
-	buyerInfoMap := make([]string, 10)
+	var buyerInfoMap []userName
     	t.addTestUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
 	buyerInfoMapBytes, _ := json.Marshal(buyerInfoMap)
     
-	transporterInfoMap := make([]string, 10)
+	var transporterInfoMap []userName
     	t.addTestUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
 	transporterInfoMapBytes, _ := json.Marshal(transporterInfoMap)
 
@@ -117,7 +112,7 @@ func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr
 		fmt.Println(err2)
 	}
         
-    infoArr = append(infoArr, testUserName)
+    infoArr = append(infoArr, userName{name: testUserName})
     	return true
 }
 
@@ -330,7 +325,7 @@ func (t *SimpleChaincode) getProducerList(stub shim.ChaincodeStubInterface) ([]b
 	//var userSample user
 	var lenMap int
 
-	mapProducerInfo := make([]string, 10)
+	var mapProducerInfo []userName
 	var returnMessage string
 	fmt.Println("Getting Producer List")
     mapProducerInfoBytes, _ := stub.GetState("producerInfoMap")
@@ -341,7 +336,7 @@ func (t *SimpleChaincode) getProducerList(stub shim.ChaincodeStubInterface) ([]b
 	lenMap = len(mapProducerInfo)
 	for _, k := range mapProducerInfo {
 		fmt.Println(k)
-		userStructInfo, _ := stub.GetState(k)
+		userStructInfo, _ := stub.GetState(k.name)
         fmt.Println(string(userStructInfo))
 		returnMessage = returnMessage + string(userStructInfo) 
 		lenMap = lenMap - 1 
