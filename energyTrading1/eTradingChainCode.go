@@ -337,7 +337,7 @@ func (t *SimpleChaincode) getProducerList(stub shim.ChaincodeStubInterface) ([]b
 	_ = json.Unmarshal(mapProducerInfoBytes, &mapProducerInfo)
 	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
 	lenMap = len(mapProducerInfo)
-	for k, _ := range mapProducerInfo {
+	for _, k := range mapProducerInfo {
 		
 		userStructInfo, _ := stub.GetState(k)
 		returnMessage = returnMessage + string(userStructInfo) 
