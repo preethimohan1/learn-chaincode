@@ -64,15 +64,15 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	//producerInfoMapBytes, _ := json.Marshal(producerInfoMap)
     
 	var shipperInfoMap userIDList
-    shipperInfoMap=	t.addTestUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
+    t.addTestUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
 	//shipperInfoMapBytes, _ := json.Marshal(shipperInfoMap)
     
 	var buyerInfoMap userIDList
-    buyerInfoMap=	t.addTestUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
+    t.addTestUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
 	//buyerInfoMapBytes, _ := json.Marshal(buyerInfoMap)
     
 	var transporterInfoMap userIDList
-    transporterInfoMap=	t.addTestUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
+    t.addTestUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
 	/*transporterInfoMapBytes, _ := json.Marshal(transporterInfoMap)
 
 	_ = stub.PutState("producerInfoMap", producerInfoMapBytes)
