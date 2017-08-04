@@ -66,23 +66,19 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	//create Maps for Each Type of User
 	//producerInfoMap := make(map[string]*[]byte)
     producerInfoMap := make([]string, 10)
-    	t.addTestUser(stub, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)
-    producerInfoMap := append(producerInfoMap, "producer")
+    	t.addTestUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)
 	producerInfoMapBytes, _ := json.Marshal(producerInfoMap)
     
 	shipperInfoMap := make([]string, 10)
-    	t.addTestUser(stub, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
-    producerInfoMap := append(shipperInfoMap, "shipper")
+    	t.addTestUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
 	shipperInfoMapBytes, _ := json.Marshal(shipperInfoMap)
     
 	buyerInfoMap := make([]string, 10)
-    	t.addTestUser(stub, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
-	producerInfoMap := append(buyerInfoMap, "buyer")
-    buyerInfoMapBytes, _ := json.Marshal(buyerInfoMap)
+    	t.addTestUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
+	buyerInfoMapBytes, _ := json.Marshal(buyerInfoMap)
     
 	transporterInfoMap := make([]string, 10)
-    	t.addTestUser(stub, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
-    producerInfoMap := append(transporterInfoMap, "transporter")
+    	t.addTestUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
 	transporterInfoMapBytes, _ := json.Marshal(transporterInfoMap)
 
 	_ = stub.PutState("producerInfoMap", producerInfoMapBytes)
@@ -94,7 +90,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 }
 
-func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, testUserName string, 
+func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr []string, testUserName string, 
 				       testUserType string, testCompName string, testCompLoc string, testPassword string, 
 				       testBankAccountNum int, testBankBalance float64 ) bool {
 	
@@ -120,7 +116,9 @@ func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, testUse
 	if err2 != nil {
 		fmt.Println(err2)
 	}
-    return true
+        
+    infoArr = append(infoArr, testUserName)
+    	return true
 }
 
 // Invoke isur entry point to invoke a chaincode function
