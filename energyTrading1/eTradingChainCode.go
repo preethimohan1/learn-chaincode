@@ -44,7 +44,7 @@ type tradeRequest struct {
 	TradeRequestIncidentID int
 }
 
-type userIDList struct {
+type UserIDList struct {
     userIDs []string
 }
 
@@ -59,26 +59,26 @@ func main() {
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
     
 	//create Maps for Each Type of User
-	var producerInfoMap userIDList
+	var producerInfoMap UserIDList
     t.addTestUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)    
 	
     
-	var shipperInfoMap userIDList
+	var shipperInfoMap UserIDList
     t.addTestUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
 	
     
-	var buyerInfoMap userIDList
+	var buyerInfoMap UserIDList
     t.addTestUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
 	
     
-	var transporterInfoMap userIDList
+	var transporterInfoMap UserIDList
     t.addTestUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
 
 	return nil, nil
 
 }
 
-func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr userIDList, testUserName string, 
+func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr UserIDList, testUserName string, 
 				       testUserType string, testCompName string, testCompLoc string, testPassword string, 
 				       testBankAccountNum int, testBankBalance float64 ) bool {
 	
@@ -115,7 +115,7 @@ func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr
     _ = stub.PutState(mapName, infoMapBytes)    
         
     
-    var mapProducerInfo userIDList
+    var mapProducerInfo UserIDList
     mapProducerInfoBytes, err3 := stub.GetState(mapName)
     fmt.Println("Printing the map in bytes")
     fmt.Println(mapProducerInfoBytes)
@@ -340,7 +340,7 @@ func (t *SimpleChaincode) getProducerList(stub shim.ChaincodeStubInterface) ([]b
 	//var userSample user
 	var lenMap int
 
-	var mapProducerInfo userIDList
+	var mapProducerInfo UserIDList
 	var returnMessage string
 	fmt.Println("Getting Producer List")
     mapProducerInfoBytes, _ := stub.GetState("producerInfoMap")
