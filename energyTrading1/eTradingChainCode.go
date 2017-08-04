@@ -57,7 +57,7 @@ func main() {
 
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
     
-	//create Maps for Each Type of User
+	//create Arrays for Each Type of User
 	var producerInfoArr UserIDList
     t.addUser(stub, producerInfoArr, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)	
     
@@ -88,14 +88,22 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
 		return false
 	}
     
-    fmt.Println(&newUser)
-    fmt.Println(userName)
-    fmt.Println(userObjBytes)
 	err1 := stub.PutState(userName, userObjBytes)
 	if err1 != nil {
 		fmt.Println(err1)
 	}
 
+    //Verify
+    var userSample user
+    userInfo, err := stub.GetState(userName)
+    fmt.Println(userInfo)
+    err1 := json.Unmarshal(userInfo, &userSample)
+		if err1 != nil {
+			return nil, err1
+		}
+    
+    fmt.Println(userSample)
+    
 	newUserLogin =	userLogin{LoginName: userName, Password: password} 
 	userObjLoginBytes, err := json.Marshal(&newUserLogin)
 	err2 := stub.PutState(loginPrefix + userName, userObjLoginBytes)
