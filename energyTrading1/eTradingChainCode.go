@@ -62,6 +62,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	var producerInfoMap userIDList
     //producerInfoMap := make([]string, 10)
     	t.addTestUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)
+    fmt.Println("Printing array in Init()")
+    fmt.Println(string(producerInfoMap))
 	producerInfoMapBytes, _ := json.Marshal(producerInfoMap)
     
 	var shipperInfoMap userIDList
@@ -113,6 +115,8 @@ func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr
 	}
         
     infoArr.userIDs = append(infoArr.userIDs, testUserName)
+    fmt.Println("Printing array in addTestUser()")
+    fmt.Println(string(infoArr))
     	return true
 }
 
