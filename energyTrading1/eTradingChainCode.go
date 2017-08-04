@@ -58,17 +58,17 @@ func main() {
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
     
 	//create Maps for Each Type of User
-	var producerInfoMap UserIDList
-    t.addUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)	
+	var producerInfoArr UserIDList
+    t.addUser(stub, producerInfoArr, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)	
     
-	var shipperInfoMap UserIDList
-    t.addUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
+	var shipperInfoArr UserIDList
+    t.addUser(stub, shipperInfoArr, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
 	    
-	var buyerInfoMap UserIDList
-    t.addUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
+	var buyerInfoArr UserIDList
+    t.addUser(stub, buyerInfoArr, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
 	    
-	var transporterInfoMap UserIDList
-    t.addUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
+	var transporterInfoArr UserIDList
+    t.addUser(stub, transporterInfoArr, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
 
 	return nil, nil
 }
@@ -101,19 +101,20 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
 	}
         
     //Add the user IDs into array of user types
-    var mapName = strings.ToLower(userType) + "InfoMap"
+    var key = strings.ToLower(userType)
     userIDArr = append(userIDArr, userName)
-    infoMapBytes, _ := json.Marshal(userIDArr)
-    _ = stub.PutState(mapName, infoMapBytes)      
+    userIDArrBytes, _ := json.Marshal(userIDArr)
+    _ = stub.PutState(key, userIDArrBytes)      
     
     	return true
 }
+
 func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var userName, userType, compName, compLoc, password, mapName string
+	var userName, userType, compName, compLoc, password, arrName string
 	var bankAccountNum int
 	var bankBalance float64
 
-	var userMap UserIDList
+	var userArr UserIDList
 	fmt.Println("Running function Register")
 
 	if len (args) != 7 {
@@ -128,11 +129,11 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 	bankBalance, _ = strconv.ParseFloat(args[5], 64)
 	password = args[6]
 
-    mapName = strings.ToLower(userType) + "InfoMap"
-    	userMapObj, _ := stub.GetState(mapName)
-    	_ = json.Unmarshal(userMapObj, &userMap)
+    arrName = strings.ToLower(userType)
+    	userArrObj, _ := stub.GetState(arrName)
+    	_ = json.Unmarshal(userArrObj, &userArr)
     
-    t.addUser (stub, userMap, userName, userType, compName, compLoc, password, bankAccountNum, bankBalance )
+    t.addUser (stub, userArr, userName, userType, compName, compLoc, password, bankAccountNum, bankBalance )
     	
 	return nil, nil
 
@@ -147,7 +148,6 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
 	}
 
 	userNameGuess = args[0]
-	//passwordGuess = args[1]
 	
 	verifyBytes, err3 := t.verifyUser(stub, args)
 	if err3 != nil {
@@ -206,24 +206,32 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 	return nil, nil
 }
 
-func (t *SimpleChaincode) getProducerList(stub shim.ChaincodeStubInterface) ([]byte, error) {
-	//var userSample user
-	var lenMap int
-
-	var mapProducerInfo UserIDList
-	var returnMessage string
-	fmt.Println("Getting Producer List")
-    mapProducerInfoBytes, _ := stub.GetState("producerInfoMap")
-	_ = json.Unmarshal(mapProducerInfoBytes, &mapProducerInfo)
+func (t *SimpleChaincode) getUserList(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var lenArr int
+	var userIDArr UserIDList
+	var userType, arrKey, returnMessage string
+    
+    if len(args) < 1 {
+        return nil, errors.New("Incorrect number of arguments. Expecting 1 (user type).")
+	}
+    
+    userType = args[0]
+    arrKey = strings.ToLower(userType)
+    
+	
+	fmt.Println("Getting User List of type " + userType)
+    
+    userIDArrBytes, _ := stub.GetState(arrKey)
+	_ = json.Unmarshal(userIDArrBytes, &userIDArr)
     
 	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
-	lenMap = len(mapProducerInfo)
-	for _, k := range mapProducerInfo {
+	lenArr = len(userIDArr)
+	for _, k := range userIDArr {
 		userStructInfo, _ := stub.GetState(k)
         
 		returnMessage = returnMessage + string(userStructInfo) 
-		lenMap = lenMap - 1 
-		if (lenMap != 0) {
+		lenArr = lenArr - 1 
+		if (lenArr != 0) {
 			returnMessage = returnMessage + ","
 		} 
 	} 
