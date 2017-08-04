@@ -87,7 +87,10 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
 		fmt.Println(err)
 		return false
 	}
-
+    
+    fmt.Println(&newUser)
+    fmt.Println(userName)
+    fmt.Println(userObjBytes)
 	err1 := stub.PutState(userName, userObjBytes)
 	if err1 != nil {
 		fmt.Println(err1)
@@ -223,7 +226,7 @@ func (t *SimpleChaincode) getUserList(stub shim.ChaincodeStubInterface, args []s
     
     userIDArrBytes, _ := stub.GetState(arrKey)
 	_ = json.Unmarshal(userIDArrBytes, &userIDArr)
-    
+    fmt.Println(userIDArr)
 	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
 	lenArr = len(userIDArr)
 	for _, k := range userIDArr {
