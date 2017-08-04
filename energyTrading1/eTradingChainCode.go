@@ -112,7 +112,7 @@ func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr
     fmt.Println(infoArr)
     infoMapBytes, _ := json.Marshal(infoArr)
     fmt.Println(infoMapBytes)
-    output = stub.PutState(mapName, infoMapBytes)    
+    output := stub.PutState(mapName, infoMapBytes)    
     fmt.Println(output)
     
     
