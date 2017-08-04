@@ -85,7 +85,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 }
 
-func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr []string, testUserName string, 
+func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr []userName, testUserName string, 
 				       testUserType string, testCompName string, testCompLoc string, testPassword string, 
 				       testBankAccountNum int, testBankBalance float64 ) bool {
 	
