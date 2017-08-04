@@ -108,11 +108,13 @@ func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr
     //Add the user IDs into array of user types
     var mapName = strings.ToLower(testUserType) + "InfoMap"
     infoArr.userIDs = append(infoArr.userIDs, testUserName)
-    infoMapBytes, _ := json.Marshal(infoArr)
-    _ = stub.PutState(mapName, infoMapBytes)    
-    
     fmt.Println("Printing array in addTestUser()")
     fmt.Println(infoArr)
+    infoMapBytes, _ := json.Marshal(infoArr)
+    fmt.Println(infoMapBytes)
+    output = stub.PutState(mapName, infoMapBytes)    
+    fmt.Println(output)
+    
     
     var mapProducerInfo userIDList
     mapProducerInfoBytes, _ := stub.GetState(mapName)
