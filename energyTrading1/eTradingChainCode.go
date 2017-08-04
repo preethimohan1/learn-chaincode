@@ -338,8 +338,9 @@ func (t *SimpleChaincode) getProducerList(stub shim.ChaincodeStubInterface) ([]b
 	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
 	lenMap = len(mapProducerInfo)
 	for _, k := range mapProducerInfo {
-		
+		fmt.Println(k)
 		userStructInfo, _ := stub.GetState(k)
+        fmt.Println(string(userStructInfo))
 		returnMessage = returnMessage + string(userStructInfo) 
 		lenMap = lenMap - 1 
 		if (lenMap != 0) {
