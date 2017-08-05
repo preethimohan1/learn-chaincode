@@ -206,26 +206,32 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 	return nil, nil
 }
 
-func (t *SimpleChaincode) getProducerList(stub shim.ChaincodeStubInterface) ([]byte, error) {
-	//var userSample user
-	var lenMap int
-
-	var mapProducerInfo UserIDList
-	var returnMessage string
-	fmt.Println("Getting Producer List")
-    mapProducerInfoBytes, _ := stub.GetState("producerInfoMap")
-	_ = json.Unmarshal(mapProducerInfoBytes, &mapProducerInfo)
-    fmt.Println("Printing the map")
-    fmt.Println(&mapProducerInfo)
+func (t *SimpleChaincode) getUserList(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var lenArr int
+	var userIDArr UserIDList
+	var userType, arrKey, returnMessage string
+    
+    if len(args) < 1 {
+        return nil, errors.New("Incorrect number of arguments. Expecting 1 (user type).")
+	}
+    
+    userType = args[0]
+    arrKey = strings.ToLower(userType) + "List"
+    
+	
+	fmt.Println("Getting User List of type " + userType)
+    
+    userIDArrBytes, _ := stub.GetState(arrKey)
+	_ = json.Unmarshal(userIDArrBytes, &userIDArr)
+    fmt.Println(userIDArr)
 	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
-	lenMap = len(mapProducerInfo)
-	for _, k := range mapProducerInfo {
-		fmt.Println(k)
+	lenArr = len(userIDArr)
+	for _, k := range userIDArr {
 		userStructInfo, _ := stub.GetState(k)
-        fmt.Println(string(userStructInfo))
+        
 		returnMessage = returnMessage + string(userStructInfo) 
-		lenMap = lenMap - 1 
-		if (lenMap != 0) {
+		lenArr = lenArr - 1 
+		if (lenArr != 0) {
 			returnMessage = returnMessage + ","
 		} 
 	} 
@@ -495,8 +501,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.verifyUser(stub, args)
 	} else if function == "getUserInfo" {
 		return t.getUserInfo(stub, args)
-	} else if function == "getProducerList" {
-		return t.getProducerList(stub)
+	} else if function == "getUserList" {
+		return t.getUserList(stub, args)
 	} else if function == "getProducerTradeRequestList" {
 		return t.getProducerTradeRequestList(stub, args)
 	} else if function == "getShipperTradeRequestList" {
