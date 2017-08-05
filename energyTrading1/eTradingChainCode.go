@@ -101,7 +101,7 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
 	}
         
     //Add the user IDs into array of user types
-    var arrKey = strings.ToLower(userType)
+    var arrKey = strings.ToLower(userType) + "List"
     userIDArr = append(userIDArr, userName)
     userIDArrBytes, _ := json.Marshal(userIDArr)
     _ = stub.PutState(arrKey, userIDArrBytes)      
@@ -129,7 +129,7 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 	bankBalance, _ = strconv.ParseFloat(args[5], 64)
 	password = args[6]
 
-	arrKey = strings.ToLower(userType)
+	arrKey = strings.ToLower(userType) + "List"
     	userArrObj, _ := stub.GetState(arrKey)
     	_ = json.Unmarshal(userArrObj, &userArr)
     
