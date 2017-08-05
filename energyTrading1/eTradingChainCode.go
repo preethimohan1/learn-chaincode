@@ -58,55 +58,55 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     
 	//create Maps for Each Type of User
 	var producerInfoMap UserIDList
-    t.addTestUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)    
+    t.addUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)    
 	
     
 	var shipperInfoMap UserIDList
-    t.addTestUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
+    t.addUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
 	
     
 	var buyerInfoMap UserIDList
-    t.addTestUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
+    t.addUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
 	
     
 	var transporterInfoMap UserIDList
-    t.addTestUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
+    t.addUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
 
 	return nil, nil
 
 }
 
-func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr UserIDList, testUserName string, 
-				       testUserType string, testCompName string, testCompLoc string, testPassword string, 
-				       testBankAccountNum int, testBankBalance float64 ) bool {
+func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr UserIDList, userName string, 
+				       userType string, compName string, compLoc string, password string, 
+				       bankAccountNum int, bankBalance float64 ) bool {
 	
-	var testUser user
-	var testUserLogin userLogin
+	var newUser user
+	var newUserLogin userLogin
 
-	testUser = user{LoginID: testUserName, UserType: testUserType, CompanyName: testCompName, 
-	CompanyLocation: testCompLoc, BankAccountNum: testBankAccountNum, BankBalance: testBankBalance}
-	userObjBytes, err := json.Marshal(&testUser)
+	newUser = user{LoginID: userName, UserType: userType, CompanyName: compName, 
+	CompanyLocation: compLoc, BankAccountNum: bankAccountNum, BankBalance: bankBalance}
+	userObjBytes, err := json.Marshal(&newUser)
 	if err != nil {
 		fmt.Println(err)
 		return false
 	}
 
-	err1 := stub.PutState(testUserName, userObjBytes)
+	err1 := stub.PutState(userName, userObjBytes)
 	if err1 != nil {
 		fmt.Println(err1)
 	}
 
-	testUserLogin =	userLogin{LoginName: testUserName, Password: testPassword} 
-	userObjLoginBytes, err := json.Marshal(&testUserLogin)
-	err2 := stub.PutState(loginPrefix + testUserName, userObjLoginBytes)
+	newUserLogin =	userLogin{LoginName: userName, Password: password} 
+	userObjLoginBytes, err := json.Marshal(&newUserLogin)
+	err2 := stub.PutState(loginPrefix + userName, userObjLoginBytes)
 	if err2 != nil {
 		fmt.Println(err2)
 	}
         
     //Add the user IDs into array of user types
-    var mapName = strings.ToLower(testUserType) + "InfoMap"
-    infoArr = append(infoArr, testUserName)
-    infoMapBytes, _ := json.Marshal(infoArr)
+    var mapName = strings.ToLower(userType) + "InfoMap"
+    userIDArr = append(userIDArr, userName)
+    infoMapBytes, _ := json.Marshal(userIDArr)
     fmt.Println(infoMapBytes)
     _ = stub.PutState(mapName, infoMapBytes)      
     
