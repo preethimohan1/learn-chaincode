@@ -58,16 +58,13 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     
 	//create Maps for Each Type of User
 	var producerInfoMap UserIDList
-    t.addUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)    
-	
+    t.addUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)    	
     
 	var shipperInfoMap UserIDList
-    t.addUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)
-	
+    t.addUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)	
     
 	var buyerInfoMap UserIDList
-    t.addUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)
-	
+    t.addUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)	
     
 	var transporterInfoMap UserIDList
     t.addUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
@@ -104,24 +101,20 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
 	}
         
     //Add the user IDs into array of user types
-    var mapName = strings.ToLower(userType) + "InfoMap"
+    var arrKey = strings.ToLower(userType) + "InfoMap"
     userIDArr = append(userIDArr, userName)
     infoMapBytes, _ := json.Marshal(userIDArr)
-    fmt.Println(infoMapBytes)
-    _ = stub.PutState(mapName, infoMapBytes)      
+    _ = stub.PutState(arrKey, infoMapBytes)      
     
     	return true
 }
 
 func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var userName, userType, compName, compLoc, password, mapName string
+	var userName, userType, compName, compLoc, password, arrKey string
 	var bankAccountNum int
 	var bankBalance float64
 
-	var userObj user	
-	var userLoginObj userLogin
-	//var userMap map[string][]byte
-    var userMap []string
+	var userArr UserIDList
 	fmt.Println("Running function Register")
 
 	if len (args) != 7 {
@@ -136,39 +129,12 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 	bankBalance, _ = strconv.ParseFloat(args[5], 64)
 	password = args[6]
 
-	//CREATING USER STRUCT WITH GENERAL INFO
-	userObj = user{LoginID: userName, UserType: userType, 
-	CompanyName: compName, CompanyLocation: compLoc, BankAccountNum: bankAccountNum, 
-	BankBalance: bankBalance}
-	userObjBytes, err := json.Marshal(&userObj)
-	if err != nil {
-		fmt.Println("Failed to save user credentials. UserObj")
-	}
-	err3 := stub.PutState(userName, userObjBytes)
-	if err3 != nil {
-		return nil, errors.New("Failed to save user credentials")
-	} 
+	arrKey = strings.ToLower(userType) + "InfoMap"
+    	userArrObj, _ := stub.GetState(arrKey)
+    	_ = json.Unmarshal(userArrObj, &userArr)
     
-	//ADDING USER TO CORRESPONDING MAP
-    	mapName = strings.ToLower(userType) + "InfoMap"
-    	userMapObj, _ := stub.GetState(mapName)
-    	_ = json.Unmarshal(userMapObj, &userMap)
-        userMap = append(userMap, userName)
-    	userMapObj,_ = json.Marshal(&userMap)
-    	_ = stub.PutState(mapName, userMapObj)   
-	
-
-	//CREATING USER LOGIN STRUCT WITH LOGIN INFO
-    	userLoginObj = userLogin{LoginName: userName, Password: password}
-	userLoginBytes, err1 := json.Marshal(&userLoginObj)
-	if err1 != nil {
-		fmt.Println("Failed to save user credentials. UserObj")
-	}
-
-	err2 := stub.PutState(loginPrefix + userName, userLoginBytes)
-	if err2 != nil {
-		fmt.Println("Failed to save user credentials. UserLoginObj")
-	}
+    t.addUser (stub, userArr, userName, userType, compName, compLoc, password, bankAccountNum, bankBalance )
+    	
 	return nil, nil
 
 }
