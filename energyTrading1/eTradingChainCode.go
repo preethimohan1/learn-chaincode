@@ -56,18 +56,18 @@ func main() {
 
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
     
-	//create Maps for Each Type of User
-	var producerInfoMap UserIDList
-    t.addUser(stub, producerInfoMap, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)    	
+	//create Arrays for Each Type of User
+	var producerInfoArr UserIDList
+    t.addUser(stub, producerInfoArr, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)    	
     
-	var shipperInfoMap UserIDList
-    t.addUser(stub, shipperInfoMap, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)	
+	var shipperInfoArr UserIDList
+    t.addUser(stub, shipperInfoArr, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)	
     
-	var buyerInfoMap UserIDList
-    t.addUser(stub, buyerInfoMap, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)	
+	var buyerInfoArr UserIDList
+    t.addUser(stub, buyerInfoArr, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)	
     
-	var transporterInfoMap UserIDList
-    t.addUser(stub, transporterInfoMap, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
+	var transporterInfoArr UserIDList
+    t.addUser(stub, transporterInfoArr, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
 
 	return nil, nil
 
@@ -101,10 +101,10 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
 	}
         
     //Add the user IDs into array of user types
-    var arrKey = strings.ToLower(userType) + "InfoMap"
+    var arrKey = strings.ToLower(userType)
     userIDArr = append(userIDArr, userName)
-    infoMapBytes, _ := json.Marshal(userIDArr)
-    _ = stub.PutState(arrKey, infoMapBytes)      
+    userIDArrBytes, _ := json.Marshal(userIDArr)
+    _ = stub.PutState(arrKey, userIDArrBytes)      
     
     	return true
 }
@@ -129,7 +129,7 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 	bankBalance, _ = strconv.ParseFloat(args[5], 64)
 	password = args[6]
 
-	arrKey = strings.ToLower(userType) + "InfoMap"
+	arrKey = strings.ToLower(userType)
     	userArrObj, _ := stub.GetState(arrKey)
     	_ = json.Unmarshal(userArrObj, &userArr)
     
