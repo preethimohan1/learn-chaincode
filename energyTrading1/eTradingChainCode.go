@@ -44,9 +44,7 @@ type tradeRequest struct {
 	TradeRequestIncidentID int
 }
 
-type UserIDList struct {
-    UserIDs []string
-}
+type UserIDList []string
 
 func main() {
 	err := shim.Start(new(SimpleChaincode))
@@ -107,7 +105,7 @@ func (t *SimpleChaincode) addTestUser (stub shim.ChaincodeStubInterface, infoArr
         
     //Add the user IDs into array of user types
     var mapName = strings.ToLower(testUserType) + "InfoMap"
-    infoArr.UserIDs = append(infoArr.UserIDs, testUserName)
+    infoArr = append(infoArr, testUserName)
     infoMapBytes, _ := json.Marshal(infoArr)
     fmt.Println(infoMapBytes)
     _ = stub.PutState(mapName, infoMapBytes)      
@@ -184,7 +182,6 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
 	}
 
 	userNameGuess = args[0]
-	//passwordGuess = args[1]
 	
 	verifyBytes, err3 := t.verifyUser(stub, args)
 	if err3 != nil {
@@ -255,8 +252,8 @@ func (t *SimpleChaincode) getProducerList(stub shim.ChaincodeStubInterface) ([]b
     fmt.Println("Printing the map")
     fmt.Println(&mapProducerInfo)
 	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
-	lenMap = len(mapProducerInfo.UserIDs)
-	for _, k := range mapProducerInfo.UserIDs {
+	lenMap = len(mapProducerInfo)
+	for _, k := range mapProducerInfo {
 		fmt.Println(k)
 		userStructInfo, _ := stub.GetState(k)
         fmt.Println(string(userStructInfo))
