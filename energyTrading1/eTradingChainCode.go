@@ -31,17 +31,17 @@ type userLogin struct {
 }
 
 type tradeRequest struct {
-	TradeRequestID int
-	ShipperID string
-	ProducerID string
-	EnergyKWH float64
-	GasPrice float64
-	EntryLocation string
-	TradeRequestStartDate string
-	TradeRequestEndDate string
-	TradeRequestStatus string
-	TradeRequestInvoiceID int
-	TradeRequestIncidentID int
+	TradeRequestID int             `json:"tr_id"`
+	ShipperID string               `json:"tr_shipper_id"`
+	ProducerID string              `json:"tr_producer_id"`
+	EnergyKWH float64              `json:"tr_energy_kwh"`
+	GasPrice float64               `json:"tr_gas_price"`
+	EntryLocation string           `json:"tr_entry_location"`
+	TradeRequestStartDate string   `json:"tr_start_date"`
+	TradeRequestEndDate string     `json:"tr_end_date"`
+	TradeRequestStatus string      `json:"tr_status"`
+	TradeRequestInvoiceID int      `json:"tr_invoice_id"`
+	TradeRequestIncidentID int     `json:"tr_incident_id"`
 }
 
 type UserIDList []string
@@ -240,51 +240,66 @@ func (t *SimpleChaincode) getUserList(stub shim.ChaincodeStubInterface, args []s
 
 }
 
-func (t *SimpleChaincode) updateUserInfo(stub shim.ChaincodeStubInterface, argsUpdated[] string, argsVerify[] string) ([]byte, error) {
-	var userName, userType, compName, compLoc, password string
+func (t *SimpleChaincode) updateUserInfo(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+	var userName, userType, compName, compLoc string
 	var bankAccountNum int
 	var bankBalance float64
 
 	var userObj user
+
+	userName = args[0]
+	userType = args[1]
+	compName = args[2]
+	compLoc = args[3]
+	bankAccountNum, _ = strconv.Atoi(args[4])
+	bankBalance, _ = strconv.ParseFloat(args[5], 64)
+		
+    userObj = user{LoginID: userName, UserType: userType, 
+    CompanyName: compName, CompanyLocation: compLoc, BankAccountNum: bankAccountNum, BankBalance: bankBalance}
+    userObjBytes, err := json.Marshal(&userObj)
+    if err != nil {
+        fmt.Println("Failed to marshal user info.")
+        fmt.Println(err)
+    }
+    err3 := stub.PutState(userName, userObjBytes)
+    if err3 != nil {
+        return nil, errors.New("Failed to save User info")
+        fmt.Println(err3)
+    } 
+	
+	return nil, nil
+}
+
+func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+	var userName, oldPassword, newPassword string	
 	var userLoginObj userLogin
 
-
-	userName = argsUpdated[0]
-	userType = argsUpdated[1]
-	compName = argsUpdated[2]
-	compLoc = argsUpdated[3]
-	bankAccountNum, _ = strconv.Atoi(argsUpdated[4])
-	bankBalance, _ = strconv.ParseFloat(argsUpdated[5], 64)
-	password = argsUpdated[6]
-
+    userName = args[0]
+    oldPassword = args[1]
+    newPassword = args[2]
+    
+    var argsVerify []string
+    argsVerify[0] = userName
+	argsVerify[1] = oldPassword
 	verifyBytes, _ := t.verifyUser(stub, argsVerify)
 
 	if testEqualSlice(verifyBytes, []byte("Valid")) {
-		userObj = user{LoginID: userName, UserType: userType, 
-		CompanyName: compName, CompanyLocation: compLoc, BankAccountNum: bankAccountNum, 
-		BankBalance: bankBalance}
-		userObjBytes, err := json.Marshal(&userObj)
-		if err != nil {
-			fmt.Println("Failed to save user credentials. UserObj")
-		}
-		err3 := stub.PutState(userName, userObjBytes)
-		if err3 != nil {
-			return nil, errors.New("Failed to save User credentials")
-		} 
-
-		userLoginObj = userLogin{LoginName: userName, Password: password}
+		
+		userLoginObj = userLogin{LoginName: userName, Password: newPassword}
 		userLoginBytes, err1 := json.Marshal(&userLoginObj)
 		if err1 != nil {
-			fmt.Println("Failed to save user credentials. UserObj")
+			fmt.Println("Failed to marshal new password credentials.")
+            fmt.Println(err1)
 		}
 
 		err2 := stub.PutState(loginPrefix + userName, userLoginBytes)
 		if err2 != nil {
-			fmt.Println("Failed to save user credentials. UserLoginObj")
+			fmt.Println("Failed to update password.")
+            fmt.Println(err2)
 		}
 		return nil, nil
 	} else {
-		return []byte("Not authorized to change user details"), nil
+		return []byte("ERROR! Not authorized to change password."), nil
 	}
 	return nil, nil
 }
@@ -483,6 +498,10 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.register(stub, args)
 	} else if function == "createTradeRequest" {
 		return t.createTradeRequest(stub, args)
+	} else if function == "changePassword" {
+		return t.changePassword(stub, args)
+	} else if function == "updateUserInfo" {
+		return t.updateUserInfo(stub, args)
 	}
  
 	fmt.Println("Invoke did not find function:" + function)
