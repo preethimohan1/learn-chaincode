@@ -173,7 +173,7 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
 
 }
 
-func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args [2]string) ([]byte, error) {
 	var userNameGuess, returnMessage, passwordGuess string
 	var loginObj userLogin
 
