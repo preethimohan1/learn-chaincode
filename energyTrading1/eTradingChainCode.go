@@ -304,7 +304,9 @@ fmt.Println("In here 3")
         var loginObj userLogin
         userLoginInfo, err := stub.GetState(loginPrefix + userName)
         fmt.Println(userLoginInfo)
-	
+	if err != nil {
+		return nil, err
+	}
 
 	err3 := json.Unmarshal(userLoginInfo, &loginObj)
 	if err3 != nil {
