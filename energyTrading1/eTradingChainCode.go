@@ -304,16 +304,13 @@ fmt.Println("In here 3")
         var loginObj userLogin
         userLoginInfo, err := stub.GetState(loginPrefix + userName)
         fmt.Println(userLoginInfo)
-	if userLoginInfo == nil {
-		returnMessage = "Invalid Username"
-		return []byte(returnMessage), nil
-	}
+	
 
-	err1 := json.Unmarshal(userLoginInfo, &loginObj)
-	if err1 != nil {
-		return nil, err
+	err3 := json.Unmarshal(userLoginInfo, &loginObj)
+	if err3 != nil {
+		return nil, err3
 	}
-        
+     fmt.Println(loginObj)   
 		return nil, nil
 	} else {
 		return []byte("ERROR! Not authorized to change password."), nil
