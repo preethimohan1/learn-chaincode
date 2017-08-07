@@ -282,21 +282,38 @@ func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[
     argsVerify[0] = userName
 	argsVerify[1] = oldPassword
 	verifyBytes, _ := t.verifyUser(stub, argsVerify)
-
+    fmt.Println("In here 1")
+    fmt.Println(argsVerify)
+    fmt.Println(verifyBytes)
 	if testEqualSlice(verifyBytes, []byte("Valid")) {
-		
+		fmt.Println("In here 2")
 		userLoginObj = userLogin{LoginName: userName, Password: newPassword}
 		userLoginBytes, err1 := json.Marshal(&userLoginObj)
 		if err1 != nil {
 			fmt.Println("Failed to marshal new password credentials.")
             fmt.Println(err1)
 		}
-
+fmt.Println("In here 3")
 		err2 := stub.PutState(loginPrefix + userName, userLoginBytes)
 		if err2 != nil {
 			fmt.Println("Failed to update password.")
             fmt.Println(err2)
 		}
+        fmt.Println("In here 4")
+        //Verify
+        var loginObj userLogin
+        userLoginInfo, err := stub.GetState(loginPrefix + userName)
+        fmt.Println(userLoginInfo)
+	if userLoginInfo == nil {
+		returnMessage = "Invalid Username"
+		return []byte(returnMessage), nil
+	}
+
+	err1 := json.Unmarshal(userLoginInfo, &loginObj)
+	if err1 != nil {
+		return nil, err
+	}
+        
 		return nil, nil
 	} else {
 		return []byte("ERROR! Not authorized to change password."), nil
