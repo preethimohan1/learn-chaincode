@@ -278,7 +278,7 @@ func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[
     oldPassword = args[1]
     newPassword = args[2]
     
-    var argsVerify []string
+    var argsVerify [2]string
     argsVerify[0] = userName
 	argsVerify[1] = oldPassword
 	verifyBytes, _ := t.verifyUser(stub, argsVerify)
