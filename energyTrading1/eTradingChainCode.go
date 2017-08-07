@@ -173,7 +173,7 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
 
 }
 
-func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args [2]string) ([]byte, error) {
+func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var userNameGuess, returnMessage, passwordGuess string
 	var loginObj userLogin
 
@@ -276,11 +276,9 @@ func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[
 
     userName = args[0]
     oldPassword = args[1]
-    newPassword = args[2]
+    newPassword = args[2]    
     
-    var argsVerify [2]string
-    argsVerify[0] = userName
-	argsVerify[1] = oldPassword
+    argsVerify := []string{userName, oldPassword}
 	verifyBytes, _ := t.verifyUser(stub, argsVerify)
     fmt.Println("In here 1")
     fmt.Println(argsVerify)
