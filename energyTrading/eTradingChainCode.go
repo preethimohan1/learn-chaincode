@@ -424,7 +424,7 @@ func (t *SimpleChaincode) getTradeRequestList(stub shim.ChaincodeStubInterface, 
         _ = json.Unmarshal(tradeRequestObjBytes, &tradeRequestObj)
         fmt.Println(tradeRequestObj);
         
-        if(tradeRequestObj.shipperID === userID || tradeRequestObj.producerID === userID) {
+        if(tradeRequestObj.shipperID == userID || tradeRequestObj.producerID == userID) {
             returnMessage = returnMessage + string(tradeRequestInfo)
             
             lenMap = lenMap - 1
