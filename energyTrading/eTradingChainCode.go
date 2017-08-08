@@ -406,7 +406,7 @@ func (t *SimpleChaincode) getTradeRequestList(stub shim.ChaincodeStubInterface, 
 	var userID, returnMessage string
 	var lenMap int	
     var trList TradeRequestIDList
-    var tradeRequestObj TradeRequest
+    var tradeRequestObj tradeRequest
     
     userID = args[0]
     
