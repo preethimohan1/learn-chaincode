@@ -148,18 +148,20 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var userNameGuess, returnMessage string
 	var userSample user
-	fmt.Println("Getting User Credentials")
+	
 	if len(args) != 2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 2.")
 	}
 
 	userNameGuess = args[0]
-	
+    fmt.Println("Getting User Credentials for user: "+userNameGuess)
+    
 	verifyBytes, err3 := t.verifyUser(stub, args)
 	if err3 != nil {
 		return nil, err3
 	}
 	if testEqualSlice(verifyBytes, []byte("Valid")) {
+        fmt.Println("Valid user: "+userNameGuess)
 		userInfo, err := stub.GetState(userNameGuess)
 		if err != nil {
 			return nil, errors.New("User was not properly registered")
@@ -172,6 +174,7 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
 		returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" :" + string(userInfo) + "}"
 		return []byte(returnMessage), nil
 	} else {
+        fmt.Println("Invalid user: "+userNameGuess)
         returnMessage = "{\"statusCode\" : \"FAIL\", \"body\" : \"ERROR: Invalid user !\"}"
 		return []byte(returnMessage), nil
 	}
@@ -193,6 +196,7 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 
 	userLoginInfo, err := stub.GetState(loginPrefix + userNameGuess)
 	if userLoginInfo == nil {
+        fmt.Println("Invalid Username")
 		returnMessage = "Invalid Username"
 		return []byte(returnMessage), nil
 	}
@@ -201,11 +205,12 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 	if err1 != nil {
 		return nil, err
 	}
-
+    fmt.Println(loginObj)
 	if passwordGuess == loginObj.Password {
 		returnMessage = "Valid"
 		return []byte(returnMessage), nil
-	} else {
+	} else {        
+        fmt.Println("Invalid Password")
 		returnMessage = "Invalid Password"
 		return []byte(returnMessage), nil
 	}
