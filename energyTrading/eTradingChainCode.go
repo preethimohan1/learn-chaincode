@@ -356,7 +356,7 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
 	if tradeRequestIDListObjBytes != nil {
 		_ = json.Unmarshal(tradeRequestIDListObjBytes, &tradeRequestIDArr)
 	}
-    tradeRequestIDArr = append(tradeRequestIDArr, tradeRequestID)	
+    tradeRequestIDArr = append(tradeRequestIDArr, tradeRequestIDString)	
     tradeRequestIDListObjBytes, _ = json.Marshal(&tradeRequestIDArr)
     _ = stub.PutState(tradeRequestKey, tradeRequestIDListObjBytes)
 
