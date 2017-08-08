@@ -76,7 +76,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr UserIDList, userName string, 
 				       userType string, compName string, compLoc string, password string, 
 				       bankAccountNum int, bankBalance float64 ) bool {
-	
+    fmt.Println("Adding new user:"+ userName);
+    
 	var newUser user
 	var newUserLogin userLogin
 
@@ -92,9 +93,10 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
 	if err1 != nil {
 		fmt.Println(err1)
 	}
-
+    
+    //Add user to login record
 	newUserLogin =	userLogin{LoginName: userName, Password: password} 
-	userObjLoginBytes, err := json.Marshal(&newUserLogin)
+	userObjLoginBytes, _ := json.Marshal(&newUserLogin)
 	err2 := stub.PutState(loginPrefix + userName, userObjLoginBytes)
 	if err2 != nil {
 		fmt.Println(err2)
@@ -106,6 +108,7 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
     userIDArrBytes, _ := json.Marshal(userIDArr)
     _ = stub.PutState(arrKey, userIDArrBytes)      
     
+    fmt.Println("Successfully added new user:"+ userName);
     	return true
 }
 
