@@ -115,6 +115,8 @@ func (t *SimpleChaincode) addCompany (stub shim.ChaincodeStubInterface, compIDAr
     compIDArrBytes, _ := json.Marshal(compIDArr)
     _ = stub.PutState(companyKey, compIDArrBytes)     
     
+    fmt.Println("Printing company ID List")
+    fmt.Println(compIDArr)
     fmt.Println("Successfully added new company:"+ compName)
     	return true
 }
@@ -131,11 +133,13 @@ func (t *SimpleChaincode) getCompanyList(stub shim.ChaincodeStubInterface, args 
     
     companyType = args[0]    
 	
-	fmt.Println("Getting company List of type " + companyType)
+	fmt.Println("Getting company list of type " + companyType)
     
     compIDArrBytes, _ := stub.GetState(companyKey)
 	_ = json.Unmarshal(compIDArrBytes, &compIDArr)
-   
+    
+   fmt.Println(compIDArr)
+    
 	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
 	lenArr = len(compIDArr)
 	for _, k := range compIDArr {
