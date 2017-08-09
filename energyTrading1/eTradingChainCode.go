@@ -10,41 +10,50 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
-var loginPrefix = "LOGIN"
+var companyKey = "COMPANYIDLIST"
+var userIDAffix = "USERLIST"
+var tradeRequestKey = "TRADEREQUESTIDLIST"
 
 type SimpleChaincode struct {
 
 }
 
-type user struct {
-	LoginID 		string 	`json:"user_id"`
-	UserType		string 	`json:"user_type"`
+type company struct {
+	CompanyID 		string 	`json:"company_id"`
+	CompanyType		string 	`json:"company_type"`
 	CompanyName 	string	`json:"company_name"`
 	CompanyLocation	string	`json:"company_location"`
-	BankAccountNum		int	`json:"bank_account_num"`
 	BankBalance		float64	`json:"bank_balance"`
 }
 
-type userLogin struct {
-	LoginName		string 	`json:"login_name"`
-	Password 		string	`json:"password"`
+type user struct {
+	UserID		string 	`json:"user_id"`
+	Password 		string	`json:"user_password"`
+    CompanyID 		string 	`json:"company_id"`
+}
+
+type userInfo struct {
+	UserID		string 	`json:"user_id"`
+    Company 	company `json:"company"`
 }
 
 type tradeRequest struct {
-	TradeRequestID int             `json:"tr_id"`
-	ShipperID string               `json:"tr_shipper_id"`
-	ProducerID string              `json:"tr_producer_id"`
-	EnergyKWH float64              `json:"tr_energy_kwh"`
-	GasPrice float64               `json:"tr_gas_price"`
-	EntryLocation string           `json:"tr_entry_location"`
-	TradeRequestStartDate string   `json:"tr_start_date"`
-	TradeRequestEndDate string     `json:"tr_end_date"`
-	TradeRequestStatus string      `json:"tr_status"`
-	TradeRequestInvoiceID int      `json:"tr_invoice_id"`
+	TradeRequestID         int     `json:"tr_id"`
+	ShipperID              string  `json:"tr_shipper_id"`
+	ProducerID             string  `json:"tr_producer_id"`
+	EnergyKWH              float64 `json:"tr_energy_kwh"`
+	GasPrice               float64 `json:"tr_gas_price"`
+	EntryLocation          string  `json:"tr_entry_location"`
+	TradeRequestStartDate  string  `json:"tr_start_date"`
+	TradeRequestEndDate    string  `json:"tr_end_date"`
+	TradeRequestStatus     string  `json:"tr_status"`
+	TradeRequestInvoiceID  int     `json:"tr_invoice_id"`
 	TradeRequestIncidentID int     `json:"tr_incident_id"`
 }
 
+type CompanyIDList []string
 type UserIDList []string
+type TradeRequestIDList []string
 
 func main() {
 	err := shim.Start(new(SimpleChaincode))
@@ -56,67 +65,124 @@ func main() {
 
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
     
+    var compIDArr CompanyIDList
+    
+    //Create default companies
+    t.addCompany (stub, compIDArr, "PRODUCER1", "Producer", "Dong Energy", "Europe", 100000)
+    t.addCompany (stub, compIDArr, "SHIPPER1", "Shipper", "RWE Supply and Trading", "Europe", 100000)
+    t.addCompany (stub, compIDArr, "TRANSPORTER1", "Transporter", "Open Grid Europe", "Europe", 100000)
+    t.addCompany (stub, compIDArr, "BUYER1", "Buyer", "EnBW", "Europe", 100000)
+    
 	//create Arrays for Each Type of User
 	var producerInfoArr UserIDList
-    t.addUser(stub, producerInfoArr, "producer", "Producer", "Producer Company 1", "Producer Company Location", "producer", 3456, 10000.0)    	
+    t.addUser(stub, producerInfoArr, "producer", "producer", "PRODUCER1", "Producer")   
     
 	var shipperInfoArr UserIDList
-    t.addUser(stub, shipperInfoArr, "shipper", "Shipper", "Shipper Company 1", "Shipper Company Location", "shipper", 1234, 10000.0)	
+    t.addUser(stub, shipperInfoArr, "shipper", "shipper", "SHIPPER1", "Shipper")	
     
 	var buyerInfoArr UserIDList
-    t.addUser(stub, buyerInfoArr, "buyer", "Buyer", "Buyer Company 1", "Buyer Company Location", "buyer", 4567, 10000.0)	
+    t.addUser(stub, buyerInfoArr, "buyer", "buyer", "BUYER1", "Buyer")	
     
 	var transporterInfoArr UserIDList
-    t.addUser(stub, transporterInfoArr, "transporter", "Transporter", "Transporter Company 1", "Transporter Company Location", "transporter", 6789, 10000.0)
+    t.addUser(stub, transporterInfoArr, "transporter", "transporter", "TRANSPORTER1", "Transporter")
 
 	return nil, nil
-
 }
 
-func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr UserIDList, userName string, 
-				       userType string, compName string, compLoc string, password string, 
-				       bankAccountNum int, bankBalance float64 ) bool {
-    fmt.Println("Adding new user:"+ userName);
+func (t *SimpleChaincode) addCompany (stub shim.ChaincodeStubInterface, compIDArr CompanyIDList, compID string, 
+				       compType string, compName string, compLoc string, bankBalance float64 ) bool {
+    fmt.Println("Adding new company:"+ compName)
     
-	var newUser user
-	var newUserLogin userLogin
-
-	newUser = user{LoginID: userName, UserType: userType, CompanyName: compName, 
-	CompanyLocation: compLoc, BankAccountNum: bankAccountNum, BankBalance: bankBalance}
-	userObjBytes, err := json.Marshal(&newUser)
+	var newCompany company
+    
+	newCompany = company{CompanyID: compID, CompanyType: compType, CompanyName: compName, 
+	CompanyLocation: compLoc, BankBalance: bankBalance}
+    
+	compObjBytes, err := json.Marshal(&newCompany)
 	if err != nil {
 		fmt.Println(err)
 		return false
 	}
 
-	err1 := stub.PutState(userName, userObjBytes)
+	err1 := stub.PutState(compID, compObjBytesObjBytes)
 	if err1 != nil {
 		fmt.Println(err1)
+        return false
+	}    
+    
+    //Add companyID to a list
+    compIDArr = append(compIDArr, compID)
+    compIDArrBytes, _ := json.Marshal(compIDArr)
+    _ = stub.PutState(companyKey, compIDArrBytes)     
+    
+    fmt.Println("Successfully added new company:"+ compName)
+    	return true
+}
+
+func (t *SimpleChaincode) getCompanyList(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var lenArr int
+	var compIDArr CompanyIDList
+	var companyType, returnMessage string
+    var companyObj company
+    
+    if len(args) < 1 {
+        return nil, errors.New("Incorrect number of arguments. Expecting 1 (company type).")
 	}
     
+    companyType = args[0]    
+	
+	fmt.Println("Getting company List of type " + companyType)
+    
+    compIDArrBytes, _ := stub.GetState(companyKey)
+	_ = json.Unmarshal(compIDArrBytes, &compIDArr)
+   
+	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
+	lenArr = len(compIDArr)
+	for _, k := range compIDArr {
+		compObjBytes, _ := stub.GetState(k)
+        _ = json.Unmarshal(compObjBytes, &companyObj)
+        fmt.Println(companyObj)
+        
+        if(companyObj.CompanyType == companyType) {            
+            returnMessage = returnMessage + string(compObjBytes) 
+            lenArr = lenArr - 1 
+            if (lenArr != 0) {
+                returnMessage = returnMessage + ","
+            } 
+        }
+	} 
+	returnMessage = returnMessage + "]}"
+	return []byte(returnMessage), nil
+
+}
+
+func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr UserIDList, userName string, 
+				       password string, compID string, compType string ) bool {
+    fmt.Println("Adding new user:"+ userName)
+    
+	var newUser user
+    
     //Add user to login record
-	newUserLogin =	userLogin{LoginName: userName, Password: password} 
+    newUser =	user{UserID: userName, Password: password, CompanyID: compID} 
 	userObjLoginBytes, _ := json.Marshal(&newUserLogin)
-	err2 := stub.PutState(loginPrefix + userName, userObjLoginBytes)
+	err2 := stub.PutState(userName, userObjLoginBytes)
 	if err2 != nil {
 		fmt.Println(err2)
 	}
         
     //Add the user IDs into array of user types
-    var arrKey = strings.ToLower(userType) + "List"
+    var arrKey = strings.ToLower(compType) + userIDAffix
     userIDArr = append(userIDArr, userName)
     userIDArrBytes, _ := json.Marshal(userIDArr)
     _ = stub.PutState(arrKey, userIDArrBytes)      
     
-    fmt.Println("Successfully added new user:"+ userName);
+    fmt.Println("Successfully added new user:"+ userName)
     	return true
 }
 
 func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var userName, userType, compName, compLoc, password, arrKey string
-	var bankAccountNum int
-	var bankBalance float64
-
+	var userName, password, companyJsonString string
+	var companyObj company
 	var userArr UserIDList
 	fmt.Println("Running function Register")
 
@@ -125,50 +191,70 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 	}
 	
 	userName = args[0]
-	userType = args[1]
-	compName = args[2]
-	compLoc = args[3]
-	bankAccountNum, _ = strconv.Atoi(args[4])
-	bankBalance, _ = strconv.ParseFloat(args[5], 64)
-	password = args[6]
-
-	arrKey = strings.ToLower(userType) + "List"
-    	userArrObj, _ := stub.GetState(arrKey)
-    	_ = json.Unmarshal(userArrObj, &userArr)
+	password = args[1]
+	companyJsonString = args[2]
+	err := json.Unmarshal([]byte(companyJsonString), &companyObj)
+    if err != nil {
+		return nil, err
+	}
+    fmt.Println(companyObj)
     
-    t.addUser (stub, userArr, userName, userType, compName, compLoc, password, bankAccountNum, bankBalance )
+	arrKey = strings.ToLower(companyObj.CompanyType) + userIDAffix
+    userArrObj, _ := stub.GetState(arrKey)
+    _ = json.Unmarshal(userArrObj, &userArr)
+    
+    t.addUser (stub, userArr, userName, password, companyObj.CompanyID, companyObj.CompanyType )
     	
 	return nil, nil
 
 }
 
 func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var userNameGuess, returnMessage string
-	var userSample user
-	fmt.Println("Getting User Credentials")
+	var userName, returnMessage string
+    var compStruct company
+	var userInfoObj userInfo
+    
 	if len(args) != 2 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 2.")
+        return nil, errors.New("Incorrect number of arguments. Expecting 2 (userName and password).")
 	}
 
-	userNameGuess = args[0]
-	
-	verifyBytes, err3 := t.verifyUser(stub, args)
+    //Requires 2 arguments
+	userName = args[0]
+    //password = args[1]
+    
+    fmt.Println("Getting user info for user: "+userName)
+    
+	validUser, err3, compID := t.verifyUser(stub, args)
 	if err3 != nil {
 		return nil, err3
-	}
-	if testEqualSlice(verifyBytes, []byte("Valid")) {
-		userInfo, err := stub.GetState(userNameGuess)
-		if err != nil {
-			return nil, errors.New("User was not properly registered")
-		}
-		err1 := json.Unmarshal(userInfo, &userSample)
-		if err1 != nil {
-			return nil, err1
-		}
-		
-		returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" :" + string(userInfo) + "}"
+    }
+    fmt.Println(compID)
+    
+	if validUser == true {
+        fmt.Println("Valid user: "+userName)		
+        
+        //Get Company details
+        compInfo, _ := stub.GetState(compID)	
+        _ := json.Unmarshal(userInfo, &compStruct)
+        
+        userInfoObj.UserID = userName
+        userInfoObj.Company = compStruct
+        
+        returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" :
+        + string([]byte(userInfoObj)) +"} "
+        
+        
+        /*returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : {\"user_id\" : \"" + userName + "\"," +
+        "\"comp_id\" : \"" + compStruct.CompanyID + "\"," +
+        "\"company_type\" : \"" + compStruct.CompanyType + "\"," +
+        "\"company_name\" : \"" + compStruct.CompanyName + "\"," +
+        "\"company_location\" : \"" + compStruct.CompanyLocation + "\"," +
+        "\"bank_balance\" : \"" + compStruct.BankBalance + "\"} }"
+           */     
+        fmt.Println("User Info: "+ returnMessage)
 		return []byte(returnMessage), nil
 	} else {
+        fmt.Println("Invalid user: "+userName)
         returnMessage = "{\"statusCode\" : \"FAIL\", \"body\" : \"ERROR: Invalid user !\"}"
 		return []byte(returnMessage), nil
 	}
@@ -176,88 +262,56 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
 
 }
 
-func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var userNameGuess, returnMessage, passwordGuess string
-	var loginObj userLogin
+func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []string) (bool, error, string) {
+	var userName, returnMessage, password string
+	var loginObj user
 
 	fmt.Println("Verifying User")
 	if len(args) != 2 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 2.")
+		return false, errors.New("Incorrect number of arguments. Expecting 2.")
 	}
 
-	userNameGuess = args[0]
-	passwordGuess = args[1]
+	userName = args[0]
+	password = args[1]
 
-	userLoginInfo, err := stub.GetState(loginPrefix + userNameGuess)
-	if userLoginInfo == nil {
+	userInfo, err := stub.GetState(userName)
+	if userInfo == nil {
+        fmt.Println("Invalid Username")
 		returnMessage = "Invalid Username"
-		return []byte(returnMessage), nil
+        return false, errors.New(returnMessage), nil
 	}
 
-	err1 := json.Unmarshal(userLoginInfo, &loginObj)
+	err1 := json.Unmarshal(userInfo, &loginObj)
 	if err1 != nil {
-		return nil, err
+		return false, err, nil
 	}
-
-	if passwordGuess == loginObj.Password {
-		returnMessage = "Valid"
-		return []byte(returnMessage), nil
-	} else {
+    fmt.Println(loginObj)
+	if password == loginObj.Password {
+		return true, nil, loginObj.CompanyID
+	} else {        
+        fmt.Println("Invalid Password")
 		returnMessage = "Invalid Password"
-		return []byte(returnMessage), nil
+		return false, errors.New(returnMessage), nil
 	}
-	return nil, nil
+	return nil, nil, nil
 }
 
-func (t *SimpleChaincode) getUserList(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var lenArr int
-	var userIDArr UserIDList
-	var userType, arrKey, returnMessage string
-    
-    if len(args) < 1 {
-        return nil, errors.New("Incorrect number of arguments. Expecting 1 (user type).")
-	}
-    
-    userType = args[0]
-    arrKey = strings.ToLower(userType) + "List"
-    
-	
-	fmt.Println("Getting User List of type " + userType)
-    
-    userIDArrBytes, _ := stub.GetState(arrKey)
-	_ = json.Unmarshal(userIDArrBytes, &userIDArr)
-    fmt.Println(userIDArr)
-	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
-	lenArr = len(userIDArr)
-	for _, k := range userIDArr {
-		userStructInfo, _ := stub.GetState(k)
-        
-		returnMessage = returnMessage + string(userStructInfo) 
-		lenArr = lenArr - 1 
-		if (lenArr != 0) {
-			returnMessage = returnMessage + ","
-		} 
-	} 
-	returnMessage = returnMessage + "]}"
-	return []byte(returnMessage), nil
 
-}
-
-func (t *SimpleChaincode) updateUserInfo(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-	var userName, userType, compName, compLoc string
+/*func (t *SimpleChaincode) updateUserInfo(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+	var userName, compType, compName, compLoc string
 	var bankAccountNum int
 	var bankBalance float64
 
 	var userObj user
 
 	userName = args[0]
-	userType = args[1]
+	compType = args[1]
 	compName = args[2]
 	compLoc = args[3]
 	bankAccountNum, _ = strconv.Atoi(args[4])
 	bankBalance, _ = strconv.ParseFloat(args[5], 64)
 		
-    userObj = user{LoginID: userName, UserType: userType, 
+    userObj = user{LoginID: userName, compType: compType, 
     CompanyName: compName, CompanyLocation: compLoc, BankAccountNum: bankAccountNum, BankBalance: bankBalance}
     userObjBytes, err := json.Marshal(&userObj)
     if err != nil {
@@ -271,27 +325,27 @@ func (t *SimpleChaincode) updateUserInfo(stub shim.ChaincodeStubInterface, args[
     } 
 	
 	return nil, nil
-}
+}*/
 
 func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
 	var userName, oldPassword, newPassword string	
-	var userLoginObj userLogin
+	var userObj user
 
     userName = args[0]
     oldPassword = args[1]
     newPassword = args[2]    
     
     argsVerify := []string{userName, oldPassword}
-	verifyBytes, _ := t.verifyUser(stub, argsVerify)
+	validUser, _ , compID := t.verifyUser(stub, argsVerify)
     
-	if testEqualSlice(verifyBytes, []byte("Valid")) {		
-		userLoginObj = userLogin{LoginName: userName, Password: newPassword}
-		userLoginBytes, err1 := json.Marshal(&userLoginObj)
+	if validUser == true {		
+        userObj = user{UserID: userName, Password: newPassword, CompanyID: compID}
+		userObjBytes, err1 := json.Marshal(&userObj)
 		if err1 != nil {
             return []byte("Failed to marshal new password credentials."), err1
 		}
 
-		err2 := stub.PutState(loginPrefix + userName, userLoginBytes)
+		err2 := stub.PutState(userName, userObjBytes)
 		if err2 != nil {
             return []byte("Failed to update password."), err2
 		}
@@ -309,8 +363,7 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
 	var energyKWH, gasPrice float64
 	var tradeRequestObj tradeRequest
 
-	var tradeRequestShipperMap map[string][]byte
-	var tradeRequestProducerMap map[string][]byte
+	var tradeRequestIDArr TradeRequestIDList
 
 	if len(args) != 8 {
 		return nil, errors.New("Incorrect number of arguments. 8 expected")
@@ -341,39 +394,17 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
 	}
 	_ = stub.PutState(tradeRequestIDString, tradeRequestObjBytes)
 
-	//Putting in Maps for Shipper
-	tradeRequestShipperMapObjBytes, err2 := stub.GetState(shipperID + "TradeRequestShipperMap")
+	//Putting in TR ID list    
+	tradeRequestIDListObjBytes, err2 := stub.GetState(tradeRequestKey)
 	if err2 != nil {
 		return nil, err2
 	}
-	if tradeRequestShipperMapObjBytes == nil {
-		tradeRequestShipperMap = make(map[string][]byte)
-		tradeRequestShipperMap[tradeRequestIDString] = tradeRequestObjBytes
-		tradeRequestShipperMapObjBytes, _ = json.Marshal(&tradeRequestShipperMap)
-		_ = stub.PutState(shipperID + "TradeRequestShipperMap", tradeRequestShipperMapObjBytes)
-	} else {
-		_ = json.Unmarshal(tradeRequestShipperMapObjBytes, &tradeRequestShipperMap)
-		tradeRequestShipperMap[tradeRequestIDString] = tradeRequestObjBytes
-		tradeRequestShipperMapObjBytes, _ = json.Marshal(&tradeRequestShipperMap)
-		_ = stub.PutState(shipperID + "TradeRequestShipperMap", tradeRequestShipperMapObjBytes)
+	if tradeRequestIDListObjBytes != nil {
+		_ = json.Unmarshal(tradeRequestIDListObjBytes, &tradeRequestIDArr)
 	}
-
-	//Putting in Maps for Prodcuer
-	tradeRequestProducerMapObjBytes, err3 := stub.GetState(producerID + "TradeRequestProducerMap")
-	if err3 != nil {
-		return nil, err3
-	}
-	if tradeRequestProducerMapObjBytes == nil {
-		tradeRequestProducerMap = make(map[string][]byte)
-		tradeRequestProducerMap[tradeRequestIDString] = tradeRequestObjBytes
-		tradeRequestProducerMapObjBytes, _ = json.Marshal(&tradeRequestProducerMap)
-		_ = stub.PutState(producerID + "TradeRequestProducerMap", tradeRequestProducerMapObjBytes)
-	} else {
-		_ = json.Unmarshal(tradeRequestProducerMapObjBytes, &tradeRequestProducerMap)
-		tradeRequestProducerMap[tradeRequestIDString] = tradeRequestObjBytes
-		tradeRequestProducerMapObjBytes, _ = json.Marshal(&tradeRequestProducerMap)
-		_ = stub.PutState(producerID + "TradeRequestProducerMap", tradeRequestProducerMapObjBytes)
-	}
+    tradeRequestIDArr = append(tradeRequestIDArr, tradeRequestIDString)	
+    tradeRequestIDListObjBytes, _ = json.Marshal(&tradeRequestIDArr)
+    _ = stub.PutState(tradeRequestKey, tradeRequestIDListObjBytes)
 
 	return nil, nil
 }
@@ -394,7 +425,7 @@ func (t *SimpleChaincode) updateTradeRequestStatus(stub shim.ChaincodeStubInterf
 	}
 	
 	//Update the status
-	tradeRequestObj.TradeRequestStatus = args[1];
+	tradeRequestObj.TradeRequestStatus = args[1]
 	
 	//Save the updated trade request
 	tradeRequestBytes, err2 := json.Marshal(&tradeRequestObj)
@@ -406,7 +437,7 @@ func (t *SimpleChaincode) updateTradeRequestStatus(stub shim.ChaincodeStubInterf
 		return nil, err3
 	}
 	
-	return nil, nil;
+	return nil, nil
 }
 
 /*func (t *SimpleChaincode) getTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
@@ -417,49 +448,36 @@ func (t *SimpleChaincode) updateTradeRequestStatus(stub shim.ChaincodeStubInterf
 	return []byte(string(tradeRequestObjBytes)), nil
 }*/
 
-func (t *SimpleChaincode) getShipperTradeRequestList(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-	var shipperID, returnMessage string
-	var lenMap int
-	mapShipperRequestInfo := make(map[string][]byte)
-	fmt.Println("Getting Trade Requests for one shipper")
-
-	shipperID = args[0]
-	mapShipperRequestInfoBytes, _ := stub.GetState(shipperID + "TradeRequestShipperMap")
-	_ = json.Unmarshal(mapShipperRequestInfoBytes, &mapShipperRequestInfo)
-	lenMap = len(mapShipperRequestInfo)
+func (t *SimpleChaincode) getTradeRequestList(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+	var companyID, returnMessage string
+	var lenMap int	
+    var trList TradeRequestIDList
+    var tradeRequestObj tradeRequest
+    
+    companyID = args[0]
+    
+    fmt.Println("Getting Trade Requests for company: "+ companyID)
+	
+	trLisObjBytes, _ := stub.GetState(tradeRequestKey)
+	_ = json.Unmarshal(trLisObjBytes, &trList)
+    
+	lenMap = len(trList)
 	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
 
-	for k, _ := range mapShipperRequestInfo {
-		tradeRequestInfo, _ := stub.GetState(k)
-		returnMessage = returnMessage + string(tradeRequestInfo)
-		lenMap = lenMap - 1
-		if (lenMap!= 0) {
-			returnMessage = returnMessage + ","
-		}
-	}
-	returnMessage = returnMessage + "]}"
-	return []byte(returnMessage), nil
-}
-
-func (t *SimpleChaincode) getProducerTradeRequestList(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-	var producerID, returnMessage string
-	var lenMap int
-	mapProducerRequestInfo := make(map[string][]byte)
-	fmt.Println("Getting Trade Requests for one Producer")
-
-	producerID = args[0]
-	mapProducerRequestInfoBytes, _ := stub.GetState(producerID + "TradeRequestProducerMap")
-	_ = json.Unmarshal(mapProducerRequestInfoBytes, &mapProducerRequestInfo)
-	lenMap = len(mapProducerRequestInfo)
-	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
-
-	for k, _ := range mapProducerRequestInfo {
-		tradeRequestInfo, _ := stub.GetState(k)
-		returnMessage = returnMessage + string(tradeRequestInfo)
-		lenMap = lenMap - 1
-		if (lenMap!= 0) {
-			returnMessage = returnMessage + ","
-		}
+	for _, k := range trList {
+        
+		tradeRequestObjBytes, _ := stub.GetState(k)
+        _ = json.Unmarshal(tradeRequestObjBytes, &tradeRequestObj)
+        fmt.Println(tradeRequestObj)
+        
+        if(tradeRequestObj.ShipperID == companyID || tradeRequestObj.ProducerID == companyID) {
+            returnMessage = returnMessage + string(tradeRequestObjBytes)
+            
+            lenMap = lenMap - 1
+            if (lenMap!= 0) {
+                returnMessage = returnMessage + ","
+            }
+        }        
 	}
 	returnMessage = returnMessage + "]}"
 	return []byte(returnMessage), nil
@@ -468,9 +486,9 @@ func (t *SimpleChaincode) getProducerTradeRequestList(stub shim.ChaincodeStubInt
 func testEqualSlice (a []byte, b []byte) bool {
 
 	if a == nil && b == nil { 
-        return true; 
+        return true
     } else if a == nil || b == nil { 
-        return false; 
+        return false
     } 
 	
 	if len(a) != len(b) {
@@ -519,13 +537,12 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.verifyUser(stub, args)
 	} else if function == "getUserInfo" {
 		return t.getUserInfo(stub, args)
-	} else if function == "getUserList" {
+	} else if function == "getCompanyList" {
 		return t.getUserList(stub, args)
-	} else if function == "getProducerTradeRequestList" {
-		return t.getProducerTradeRequestList(stub, args)
-	} else if function == "getShipperTradeRequestList" {
-		return t.getShipperTradeRequestList(stub, args)
-	}
+	} else if function == "getTradeRequestList" {
+		return t.getTradeRequestList(stub, args)
+    }
+    
 	fmt.Println("Query did not find func: " + function)
 
 	return nil, errors.New("Received unknown function query: " + function)
