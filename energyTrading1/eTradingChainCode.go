@@ -69,8 +69,14 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     
     //Create default companies
     t.addCompany (stub, compIDArr, "PRODUCER1", "Producer", "Dong Energy", "Europe", 100000)
+    compIDArr = append(compIDArr, "PRODUCER1")
+    
     t.addCompany (stub, compIDArr, "SHIPPER1", "Shipper", "RWE Supply and Trading", "Europe", 100000)
+    compIDArr = append(compIDArr, "SHIPPER1")
+    
     t.addCompany (stub, compIDArr, "TRANSPORTER1", "Transporter", "Open Grid Europe", "Europe", 100000)
+    compIDArr = append(compIDArr, "TRANSPORTER1")
+    
     t.addCompany (stub, compIDArr, "BUYER1", "Buyer", "EnBW", "Europe", 100000)
     
 	//create Arrays for Each Type of User
