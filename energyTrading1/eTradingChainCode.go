@@ -51,6 +51,12 @@ type tradeRequest struct {
 	TradeRequestIncidentID int     `json:"tr_incident_id"`
 }
 
+type tradeRequestInfo struct {
+    TradeRequest    tradeRequest    `json:"trade_request"`
+    ShipperCompany  company         `json:"shipper_company"`
+    ProducerCompany company         `json:"producer_company"`
+}
+
 type CompanyIDList []string
 type UserIDList []string
 type TradeRequestIDList []string
@@ -153,7 +159,7 @@ func (t *SimpleChaincode) getCompanyList(stub shim.ChaincodeStubInterface, args 
         _ = json.Unmarshal(compObjBytes, &companyObj)
         fmt.Println(companyObj)
         
-        if(companyObj.CompanyType == companyType) {            
+        if(strings.ToLower(companyObj.CompanyType) == strings.ToLower(companyType)) {            
             returnMessage = returnMessage + string(compObjBytes) 
             lenArr = lenArr - 1 
             if (lenArr != 0) {
@@ -257,14 +263,6 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
         }
         returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : " + string(userInfoObjBytes) + "} "
         
-        
-        /*returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : {\"user_id\" : \"" + userName + "\"," +
-        "\"comp_id\" : \"" + compStruct.CompanyID + "\"," +
-        "\"company_type\" : \"" + compStruct.CompanyType + "\"," +
-        "\"company_name\" : \"" + compStruct.CompanyName + "\"," +
-        "\"company_location\" : \"" + compStruct.CompanyLocation + "\"," +
-        "\"bank_balance\" : \"" + compStruct.BankBalance + "\"} }"
-           */     
         fmt.Println("User Info: "+ returnMessage)
 		return []byte(returnMessage), nil
 	} else {
@@ -372,6 +370,7 @@ func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[
 }
 
 func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+    
 	var shipperID, tradeRequestIDString, producerID, entryLocation, tradeRequestStartDate, tradeRequestEndDate, tradeRequestStatus string
 	var tradeRequestID, tradeRequestInvoiceID, tradeRequestIncidentID int
 	var energyKWH, gasPrice float64
@@ -382,6 +381,8 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
 	if len(args) != 8 {
 		return nil, errors.New("Incorrect number of arguments. 8 expected")
 	}
+    
+    fmt.Println("Creating new trade request...")
 
 	tradeRequestIDString = args[0]
 	tradeRequestID, _ = strconv.Atoi(args[0])
@@ -415,11 +416,12 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
 	}
 	if tradeRequestIDListObjBytes != nil {
 		_ = json.Unmarshal(tradeRequestIDListObjBytes, &tradeRequestIDArr)
-	}
+	}    
     tradeRequestIDArr = append(tradeRequestIDArr, tradeRequestIDString)	
     tradeRequestIDListObjBytes, _ = json.Marshal(&tradeRequestIDArr)
     _ = stub.PutState(tradeRequestKey, tradeRequestIDListObjBytes)
-
+    fmt.Println(tradeRequestIDArr)
+    
 	return nil, nil
 }
 
@@ -467,10 +469,12 @@ func (t *SimpleChaincode) getTradeRequestList(stub shim.ChaincodeStubInterface, 
 	var lenMap int	
     var trList TradeRequestIDList
     var tradeRequestObj tradeRequest
+    var tradeRequestFullObj tradeRequestInfo
+    var shipperCompany, producerCompany company
     
     companyID = args[0]
     
-    fmt.Println("Getting Trade Requests for company: "+ companyID)
+    fmt.Println("Getting Trade requests for company: "+ companyID)
 	
 	trLisObjBytes, _ := stub.GetState(tradeRequestKey)
 	_ = json.Unmarshal(trLisObjBytes, &trList)
@@ -485,7 +489,24 @@ func (t *SimpleChaincode) getTradeRequestList(stub shim.ChaincodeStubInterface, 
         fmt.Println(tradeRequestObj)
         
         if(tradeRequestObj.ShipperID == companyID || tradeRequestObj.ProducerID == companyID) {
-            returnMessage = returnMessage + string(tradeRequestObjBytes)
+            tradeRequestFullObj.TradeRequest = tradeRequestObj
+            
+            //Get shipper object
+            shipperObjBytes, _ := stub.GetState(tradeRequestObj.ShipperID)
+            _ = json.Unmarshal(shipperObjBytes, &shipperCompany)
+            tradeRequestFullObj.ShipperCompany = shipperCompany
+            
+            //Get producer object
+            producerObjBytes, _ := stub.GetState(tradeRequestObj.ProducerID)
+            _ = json.Unmarshal(producerObjBytes, &producerCompany)
+            tradeRequestFullObj.ProducerCompany = producerCompany
+            
+            tradeRequestFullObjBytes, err1 := json.Marshal(tradeRequestFullObj)
+            if err1 != nil {
+              return nil, err1
+            }
+            
+            returnMessage = returnMessage + string(tradeRequestFullObjBytes)
             
             lenMap = lenMap - 1
             if (lenMap!= 0) {
@@ -531,9 +552,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.createTradeRequest(stub, args)
 	} else if function == "changePassword" {
 		return t.changePassword(stub, args)
-	} /*else if function == "updateUserInfo" {
-		return t.updateUserInfo(stub, args)
-	}*/
+	} else if function == "updateTradeRequestStatus" {
+		return t.updateTradeRequestStatus(stub, args)
+	}
  
 	fmt.Println("Invoke did not find function:" + function)
 
