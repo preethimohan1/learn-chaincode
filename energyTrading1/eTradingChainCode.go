@@ -104,7 +104,7 @@ func (t *SimpleChaincode) addCompany (stub shim.ChaincodeStubInterface, compIDAr
 		return false
 	}
 
-	err1 := stub.PutState(compID, compObjBytesObjBytes)
+	err1 := stub.PutState(compID, compObjBytes)
 	if err1 != nil {
 		fmt.Println(err1)
         return false
@@ -163,8 +163,8 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
 	var newUser user
     
     //Add user to login record
-    newUser =	user{UserID: userName, Password: password, CompanyID: compID} 
-	userObjLoginBytes, _ := json.Marshal(&newUserLogin)
+    newUser = user{UserID: userName, Password: password, CompanyID: compID} 
+	userObjLoginBytes, _ := json.Marshal(&newUser)
 	err2 := stub.PutState(userName, userObjLoginBytes)
 	if err2 != nil {
 		fmt.Println(err2)
@@ -181,7 +181,7 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
 }
 
 func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var userName, password, companyJsonString string
+	var userName, password, companyJsonString, arrKey string
 	var companyObj company
 	var userArr UserIDList
 	fmt.Println("Running function Register")
@@ -235,13 +235,12 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
         
         //Get Company details
         compInfo, _ := stub.GetState(compID)	
-        _ := json.Unmarshal(userInfo, &compStruct)
+        _ := json.Unmarshal(compInfo, &compStruct)
         
         userInfoObj.UserID = userName
         userInfoObj.Company = compStruct
         
-        returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" :
-        + string([]byte(userInfoObj)) +"} "
+        returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : " + string(userInfoObj) + "} "
         
         
         /*returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : {\"user_id\" : \"" + userName + "\"," +
@@ -268,7 +267,7 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 
 	fmt.Println("Verifying User")
 	if len(args) != 2 {
-		return false, errors.New("Incorrect number of arguments. Expecting 2.")
+		return false, errors.New("Incorrect number of arguments. Expecting 2."), ""
 	}
 
 	userName = args[0]
@@ -278,12 +277,12 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 	if userInfo == nil {
         fmt.Println("Invalid Username")
 		returnMessage = "Invalid Username"
-        return false, errors.New(returnMessage), nil
+        return false, errors.New(returnMessage), ""
 	}
 
 	err1 := json.Unmarshal(userInfo, &loginObj)
 	if err1 != nil {
-		return false, err, nil
+		return false, err, ""
 	}
     fmt.Println(loginObj)
 	if password == loginObj.Password {
@@ -291,9 +290,9 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 	} else {        
         fmt.Println("Invalid Password")
 		returnMessage = "Invalid Password"
-		return false, errors.New(returnMessage), nil
+		return false, errors.New(returnMessage), ""
 	}
-	return nil, nil, nil
+	return nil, nil, ""
 }
 
 
