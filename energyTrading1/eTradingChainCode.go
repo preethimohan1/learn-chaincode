@@ -537,12 +537,10 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
-	} else if function == "verifyUser" {
-		return t.verifyUser(stub, args)
 	} else if function == "getUserInfo" {
 		return t.getUserInfo(stub, args)
 	} else if function == "getCompanyList" {
-		return t.getUserList(stub, args)
+		return t.getCompanyList(stub, args)
 	} else if function == "getTradeRequestList" {
 		return t.getTradeRequestList(stub, args)
     }
