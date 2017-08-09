@@ -224,9 +224,9 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
     
     fmt.Println("Getting user info for user: "+userName)
     
-	validUser, err3, compID := t.verifyUser(stub, args)
-	if err3 != nil {
-		return nil, err3
+	validUser, err1, compID := t.verifyUser(stub, args)
+	if err1 != nil {
+		return nil, err1
     }
     fmt.Println(compID)
     
@@ -235,12 +235,17 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
         
         //Get Company details
         compInfo, _ := stub.GetState(compID)	
-        _ := json.Unmarshal(compInfo, &compStruct)
+        _ = json.Unmarshal(compInfo, &compStruct)
         
         userInfoObj.UserID = userName
         userInfoObj.Company = compStruct
+        fmt.Println(userInfoObj)
         
-        returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : " + string(userInfoObj) + "} "
+        userInfoObjBytes, err2 := json.Marshal(userInfoObj)
+        if err2 != nil {
+		  return nil, err2
+        }
+        returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : " + string(userInfoObjBytes) + "} "
         
         
         /*returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : {\"user_id\" : \"" + userName + "\"," +
@@ -292,7 +297,7 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 		returnMessage = "Invalid Password"
 		return false, errors.New(returnMessage), ""
 	}
-	return nil, nil, ""
+	return false, nil, ""
 }
 
 
@@ -516,9 +521,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.createTradeRequest(stub, args)
 	} else if function == "changePassword" {
 		return t.changePassword(stub, args)
-	} else if function == "updateUserInfo" {
+	} /*else if function == "updateUserInfo" {
 		return t.updateUserInfo(stub, args)
-	}
+	}*/
  
 	fmt.Println("Invoke did not find function:" + function)
 
