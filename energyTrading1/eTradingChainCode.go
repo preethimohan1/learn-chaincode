@@ -76,28 +76,48 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     //Create default companies
     t.addCompany (stub, compIDArr, "PRODUCER1", "Producer", "Dong Energy", "Europe", 100000)
     compIDArr = append(compIDArr, "PRODUCER1")
+    t.addCompany (stub, compIDArr, "PRODUCER2", "Producer", "Gaz Promp", "Europe", 100000)
+    compIDArr = append(compIDArr, "PRODUCER2")
     
     t.addCompany (stub, compIDArr, "SHIPPER1", "Shipper", "RWE Supply and Trading", "Europe", 100000)
     compIDArr = append(compIDArr, "SHIPPER1")
+    t.addCompany (stub, compIDArr, "SHIPPER2", "Shipper", "UNIPER Energy Trading", "Europe", 100000)
+    compIDArr = append(compIDArr, "SHIPPER2")
     
     t.addCompany (stub, compIDArr, "TRANSPORTER1", "Transporter", "Open Grid Europe", "Europe", 100000)
     compIDArr = append(compIDArr, "TRANSPORTER1")
+    t.addCompany (stub, compIDArr, "TRANSPORTER2", "Transporter", "ONTRAS GMBH", "Europe", 100000)
+    compIDArr = append(compIDArr, "TRANSPORTER2")
+    t.addCompany (stub, compIDArr, "TRANSPORTER3", "Transporter", "Gasunie DTS", "Europe", 100000)
+    compIDArr = append(compIDArr, "TRANSPORTER3")
     
     t.addCompany (stub, compIDArr, "BUYER1", "Buyer", "EnBW", "Europe", 100000)
+    compIDArr = append(compIDArr, "BUYER1")
+    t.addCompany (stub, compIDArr, "BUYER2", "Buyer", "Vattenfall", "Europe", 100000)
+    compIDArr = append(compIDArr, "BUYER2")
     
 	//create Arrays for Each Type of User
-	var producerInfoArr UserIDList
-    t.addUser(stub, producerInfoArr, "producer", "producer", "PRODUCER1", "Producer")   
+	var userIDArr UserIDList
+    t.addUser(stub, userIDArr, "producer1", "producer1", "PRODUCER1", "Producer")
+    userIDArr = append(userIDArr, "producer1")
+    t.addUser(stub, userIDArr, "producer2", "producer2", "PRODUCER2", "Producer")     
+	userIDArr = append(userIDArr, "producer2")
     
-	var shipperInfoArr UserIDList
-    t.addUser(stub, shipperInfoArr, "shipper", "shipper", "SHIPPER1", "Shipper")	
+    t.addUser(stub, userIDArr, "shipper1", "shipper1", "SHIPPER1", "Shipper")	
+    userIDArr = append(userIDArr, "shipper1")
+    t.addUser(stub, userIDArr, "shipper2", "shipper2", "SHIPPER2", "Shipper")	
+    userIDArr = append(userIDArr, "shipper2")
+	
+    t.addUser(stub, userIDArr, "transporter1", "transporter1", "TRANSPORTER1", "Transporter")
+    userIDArr = append(userIDArr, "transporter1")
+    t.addUser(stub, userIDArr, "transporter2", "transporter2", "TRANSPORTER2", "Transporter")
+    userIDArr = append(userIDArr, "transporter2")
+	
+    t.addUser(stub, userIDArr, "buyer1", "buyer1", "BUYER1", "Buyer")	
+    userIDArr = append(userIDArr, "buyer1")
+    t.addUser(stub, userIDArr, "buyer2", "buyer2", "BUYER2", "Buyer")	
+    userIDArr = append(userIDArr, "buyer2")
     
-	var buyerInfoArr UserIDList
-    t.addUser(stub, buyerInfoArr, "buyer", "buyer", "BUYER1", "Buyer")	
-    
-	var transporterInfoArr UserIDList
-    t.addUser(stub, transporterInfoArr, "transporter", "transporter", "TRANSPORTER1", "Transporter")
-
 	return nil, nil
 }
 
@@ -159,7 +179,7 @@ func (t *SimpleChaincode) getCompanyList(stub shim.ChaincodeStubInterface, args 
         _ = json.Unmarshal(compObjBytes, &companyObj)
         fmt.Println(companyObj)
         
-        if(strings.ToLower(companyObj.CompanyType) == strings.ToLower(companyType)) {            
+        if(strings.ToLower(companyType) == "all" || strings.ToLower(companyObj.CompanyType) == strings.ToLower(companyType)) {        
             returnMessage = returnMessage + string(compObjBytes) 
             lenArr = lenArr - 1 
             if (lenArr != 0) {
@@ -202,8 +222,8 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 	var userArr UserIDList
 	fmt.Println("Running function Register")
 
-	if len (args) != 7 {
-		return nil, errors.New("Incorrect number of argumets. Expecting 7")
+	if len (args) < 3 {
+        return nil, errors.New("Incorrect number of arguments. Expecting 3 (userName, password, company)")
 	}
 	
 	userName = args[0]
