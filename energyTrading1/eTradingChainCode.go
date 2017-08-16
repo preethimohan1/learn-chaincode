@@ -458,6 +458,15 @@ func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, p
     return nil, nil
 }
 
+func (t *SimpleChaincode) updateBusinessPlan(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+    _, err := t.createBusinessPlan(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])
+    if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+
 func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
     
 	var shipperID, tradeRequestIDString, producerID, entryLocation, tradeRequestStartDate, tradeRequestEndDate, tradeRequestStatus string
