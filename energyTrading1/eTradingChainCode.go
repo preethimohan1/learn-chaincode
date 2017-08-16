@@ -438,7 +438,7 @@ func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[
 	return nil, nil
 }
 
-func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, planID string, planDate string, gasPrice float64
+func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, planID string, planDate string, gasPrice float64,
                                             entryLocation string, entryCapacity int, exitLocation string, exitCapacity int, compID string) ([]byte, error) {
     fmt.Println("Entering function createBusinessPlan()")
     
