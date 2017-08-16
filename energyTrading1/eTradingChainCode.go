@@ -86,7 +86,7 @@ func main() {
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
     var currentDate string    
     year, month, day := time.Now().Date()
-    currentDate = day + "/" + month + "/" + year
+    currentDate = strconv.Itoa(day) + "/" + strconv.Itoa(month) + "/" + strconv.Itoa(year)
     
     //Create default companies
     var compIDArr CompanyIDList
