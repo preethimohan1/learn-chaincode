@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
     	"strings"
-	//"time"
+	"time"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
@@ -24,6 +24,7 @@ type company struct {
 	CompanyName 	string	`json:"company_name"`
 	CompanyLocation	string	`json:"company_location"`
 	BankBalance		float64	`json:"bank_balance"`
+    BalanceUpdatedDate		string	`json:"bank_balance_date"`
 }
 
 type user struct {
@@ -126,9 +127,11 @@ func (t *SimpleChaincode) addCompany (stub shim.ChaincodeStubInterface, compIDAr
     fmt.Println("Adding new company:"+ compName)
     
 	var newCompany company
+    current_time := time.Now().Local()
+    var balanceDate = current_time.Format("21/10/2017")
     
 	newCompany = company{CompanyID: compID, CompanyType: compType, CompanyName: compName, 
-	CompanyLocation: compLoc, BankBalance: bankBalance}
+                         CompanyLocation: compLoc, BankBalance: bankBalance, BalanceUpdatedDate: balanceDate}
     
 	compObjBytes, err := json.Marshal(&newCompany)
 	if err != nil {
@@ -329,35 +332,43 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 }
 
 
-/*func (t *SimpleChaincode) updateUserInfo(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-	var userName, compType, compName, compLoc string
-	var bankAccountNum int
-	var bankBalance float64
+func (t *SimpleChaincode) topupBankBalance(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+	var compID, topupDate string
+	var topupAmount float64
+	var companyObj company
+    
+    fmt.Println("Entered function topupBankBalance()")
+    
+    if len(args) < 3 {
+        return nil, errors.New("Incorrect number of arguments. Expecting 2 arguments (CompanyID, top-up amount, top-up date).")
+	}
 
-	var userObj user
-
-	userName = args[0]
-	compType = args[1]
-	compName = args[2]
-	compLoc = args[3]
-	bankAccountNum, _ = strconv.Atoi(args[4])
-	bankBalance, _ = strconv.ParseFloat(args[5], 64)
-		
-    userObj = user{LoginID: userName, compType: compType, 
-    CompanyName: compName, CompanyLocation: compLoc, BankAccountNum: bankAccountNum, BankBalance: bankBalance}
-    userObjBytes, err := json.Marshal(&userObj)
+	compID = args[0]
+	topupAmount, _ = strconv.ParseFloat(args[1], 64)
+    topupDate = args[2]
+    
+    //Get the company object from DB
+    compObjBytes, _ := stub.GetState(compID)
+    _ = json.Unmarshal(compObjBytes, &companyObj)
+    fmt.Println(companyObj)
+    
+    //Topup the amount   
+    companyObj.BankBalance = companyObj.BankBalance + topupAmount   
+    companyObj.BalanceUpdatedDate = topupDate
+        
+    companyObjBytes, err := json.Marshal(&companyObj)
     if err != nil {
-        fmt.Println("Failed to marshal user info.")
+        fmt.Println("Failed to marshal company info.")
         fmt.Println(err)
     }
-    err3 := stub.PutState(userName, userObjBytes)
+    err3 := stub.PutState(compID, companyObjBytes)
     if err3 != nil {
-        return nil, errors.New("Failed to save User info")
+        return nil, errors.New("Failed to save Company info")
         fmt.Println(err3)
     } 
 	
 	return nil, nil
-}*/
+}
 
 func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
 	var userName, oldPassword, newPassword string	
