@@ -459,7 +459,13 @@ func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, p
 }
 
 func (t *SimpleChaincode) updateBusinessPlan(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-    _, err := t.createBusinessPlan(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])
+    var gasPrice float64
+    var entryCapacity, exitCapacity int
+    gasPrice, _ = strconv.ParseFloat(args[2], 64)
+    entryCapacity, _ = strconv.Atoi(args[4])
+    exitCapacity, _ = strconv.Atoi(args[6])
+    
+    _, err := t.createBusinessPlan(args[0], args[1], gasPrice, args[3], entryCapacity, args[5], exitCapacity, args[7])
     if err != nil {
 		return nil, err
 	}
