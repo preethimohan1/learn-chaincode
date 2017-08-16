@@ -443,19 +443,6 @@ func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, p
     fmt.Println("Entering function createBusinessPlan()")
     
     var businessPlanObj businessPlan
-
-    /*if len(args) < 7 {
-		return nil, errors.New("Incorrect number of arguments. 7 expected")
-	}
-    
-    planID = args[0]
-    planDate = args[1]
-    gasPrice , _ = strconv.ParseFloat(args[2], 64)
-    entryLocation = args[3]
-    entryCapacity, _ = strconv.Atoi(args[4])
-    exitLocation = args[5]
-    exitCapacity, _ = strconv.Atoi(args[6])    
-    compID = args[7]*/
     
     businessPlanObj = businessPlan{PlanID: planID, PlanDate: planDate, GasPrice: gasPrice, EntryLocation: entryLocation, EntryCapacity: entryCapacity, ExitLocation: exitLocation, ExitCapacity: exitCapacity, CompanyID: compID}
     
@@ -463,7 +450,7 @@ func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, p
     if err1 != nil {
 		return nil, err1
 	}
-	err2 = stub.PutState(planID, businessPlanObjBytes)
+    err2 := stub.PutState(planID, businessPlanObjBytes)
     if err2 != nil {
 		return nil, err2
 	}
