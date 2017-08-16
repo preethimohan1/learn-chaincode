@@ -86,7 +86,8 @@ func main() {
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
     var currentDate string    
     year, month, day := time.Now().Date()
-    currentDate = strconv.Itoa(day) + "/" + strconv.Itoa(month) + "/" + strconv.Itoa(year)
+    var monthInNumber int = int(month) //convert time.Month to integer
+    currentDate = strconv.Itoa(day) + "/" + strconv.Itoa(monthInNumber) + "/" + strconv.Itoa(year)
     
     //Create default companies
     var compIDArr CompanyIDList
@@ -140,17 +141,17 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     var planID string
     
     planID = planIDPrefix + "PRODUCER1"
-    t.createBusinessPlan(planID, currentDate, 12.0, "Europe", 200, "Wardenburg", 200, "PRODUCER1")    
+    t.createBusinessPlan(stub, planID, currentDate, 12.0, "Europe", 200, "Wardenburg", 200, "PRODUCER1")    
     planID = planIDPrefix + "PRODUCER2"
-    t.createBusinessPlan(planID, currentDate, 10.0, "Europe", 300, "Ellund", 300, "PRODUCER2")
+    t.createBusinessPlan(stub, planID, currentDate, 10.0, "Europe", 300, "Ellund", 300, "PRODUCER2")
     
     //Create business plan for trasporters
     planID = planIDPrefix + "TRANSPORTER1"
-    t.createBusinessPlan(planID, currentDate, 11.0, "Wardenburg", 200, "Bunder-Tief", 100, "TRANSPORTER1")    
+    t.createBusinessPlan(stub, planID, currentDate, 11.0, "Wardenburg", 200, "Bunder-Tief", 100, "TRANSPORTER1")    
     planID = planIDPrefix + "TRANSPORTER2"
-    t.createBusinessPlan(planID, currentDate, 9.0, "Ellund", 300, "Steinbrink", 150, "TRANSPORTER2")
+    t.createBusinessPlan(stub, planID, currentDate, 9.0, "Ellund", 300, "Steinbrink", 150, "TRANSPORTER2")
     planID = planIDPrefix + "TRANSPORTER3"
-    t.createBusinessPlan(planID, currentDate, 8.0, "Ellund", 350, "Steinitz", 175, "TRANSPORTER3")
+    t.createBusinessPlan(stub, planID, currentDate, 8.0, "Ellund", 350, "Steinitz", 175, "TRANSPORTER3")
     
 	return nil, nil
 }
@@ -437,12 +438,13 @@ func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[
 	return nil, nil
 }
 
-func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-    var planID, compID, planDate, entryLocation, exitLocation string
-    var gasPrice, entryCapacity, exitCapacity float64
+func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, planID string, planDate string, gasPrice float64
+                                            entryLocation string, entryCapacity int, exitLocation string, exitCapacity int, compID string) ([]byte, error) {
+    fmt.Println("Entering function createBusinessPlan()")
+    
     var businessPlanObj businessPlan
 
-    if len(args) < 7 {
+    /*if len(args) < 7 {
 		return nil, errors.New("Incorrect number of arguments. 7 expected")
 	}
     
@@ -453,7 +455,7 @@ func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, a
     entryCapacity, _ = strconv.Atoi(args[4])
     exitLocation = args[5]
     exitCapacity, _ = strconv.Atoi(args[6])    
-    compID = args[7]
+    compID = args[7]*/
     
     businessPlanObj = businessPlan{PlanID: planID, PlanDate: planDate, GasPrice: gasPrice, EntryLocation: entryLocation, EntryCapacity: entryCapacity, ExitLocation: exitLocation, ExitCapacity: exitCapacity, CompanyID: compID}
     
