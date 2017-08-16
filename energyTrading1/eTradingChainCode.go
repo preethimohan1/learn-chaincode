@@ -314,9 +314,11 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
         fmt.Println(userInfoObj)
         
         //Get Business Plan info
-        bpInfo, _ := stub.GetState(planIDPrefix + compID)	
-        _ = json.Unmarshal(bpInfo, &busPlanStruct)
-        userInfoObj.BusinessPlan = busPlanStruct
+        if compStruct.CompanyType == "Producer" || compStruct.CompanyType == "Transporter" {
+            bpInfo, _ := stub.GetState(planIDPrefix + compID)	
+            _ = json.Unmarshal(bpInfo, &busPlanStruct)
+            userInfoObj.BusinessPlan = busPlanStruct
+        }
         
         userInfoObjBytes, err2 := json.Marshal(userInfoObj)
         if err2 != nil {
