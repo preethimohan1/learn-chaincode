@@ -13,6 +13,7 @@ import (
 var companyKey = "COMPANYIDLIST"
 var userIDAffix = "USERLIST"
 var tradeRequestKey = "TRADEREQUESTIDLIST"
+var planIDPrefix = "PLAN_"
 
 type SimpleChaincode struct {
 
@@ -36,13 +37,25 @@ type user struct {
 type userInfo struct {
 	UserID		string 	`json:"user_id"`
     Company 	company `json:"company"`
+    BusinessPlan businessPlan `json:"business_plan"`
+}
+
+type businessPlan struct {
+	PlanID 		    string 	`json:"bp_plan_id"`
+    PlanDate 		string 	`json:"bp_plan_date"`
+	GasPrice		float64	`json:"bp_gas_price"`    
+	EntryLocation 	string	`json:"bp_entry_location"`
+	EntryCapacity	int	    `json:"bp_entry_capacity"`
+	ExitLocation 	string	`json:"bp_exit_location"`
+	ExitCapacity	int	    `json:"bp_exit_capacity"`
+    CompanyID 		string 	`json:"bp_company_id"`
 }
 
 type tradeRequest struct {
 	TradeRequestID         int     `json:"tr_id"`
 	ShipperID              string  `json:"tr_shipper_id"`
 	ProducerID             string  `json:"tr_producer_id"`
-	EnergyKWH              float64 `json:"tr_energy_kwh"`
+	EnergyMWH              float64 `json:"tr_energy_mwh"`
 	GasPrice               float64 `json:"tr_gas_price"`
 	EntryLocation          string  `json:"tr_entry_location"`
 	TradeRequestStartDate  string  `json:"tr_start_date"`
@@ -71,33 +84,35 @@ func main() {
 }
 
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-    
-    var compIDArr CompanyIDList
+    var currentDate string    
+    year, month, day := time.Now().Date()
+    currentDate = day + "/" + month + "/" + year
     
     //Create default companies
-    t.addCompany (stub, compIDArr, "PRODUCER1", "Producer", "Dong Energy", "Europe", 100000)
+    var compIDArr CompanyIDList
+    t.addCompany (stub, compIDArr, "PRODUCER1", "Producer", "Dong Energy", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "PRODUCER1")
-    t.addCompany (stub, compIDArr, "PRODUCER2", "Producer", "Gaz Promp", "Europe", 100000)
+    t.addCompany (stub, compIDArr, "PRODUCER2", "Producer", "Gaz Promp", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "PRODUCER2")
     
-    t.addCompany (stub, compIDArr, "SHIPPER1", "Shipper", "RWE Supply and Trading", "Europe", 100000)
+    t.addCompany (stub, compIDArr, "SHIPPER1", "Shipper", "RWE Supply and Trading", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "SHIPPER1")
-    t.addCompany (stub, compIDArr, "SHIPPER2", "Shipper", "UNIPER Energy Trading", "Europe", 100000)
+    t.addCompany (stub, compIDArr, "SHIPPER2", "Shipper", "UNIPER Energy Trading", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "SHIPPER2")
     
-    t.addCompany (stub, compIDArr, "TRANSPORTER1", "Transporter", "Open Grid Europe", "Europe", 100000)
+    t.addCompany (stub, compIDArr, "TRANSPORTER1", "Transporter", "Open Grid Europe", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "TRANSPORTER1")
-    t.addCompany (stub, compIDArr, "TRANSPORTER2", "Transporter", "ONTRAS GMBH", "Europe", 100000)
+    t.addCompany (stub, compIDArr, "TRANSPORTER2", "Transporter", "ONTRAS GMBH", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "TRANSPORTER2")
-    t.addCompany (stub, compIDArr, "TRANSPORTER3", "Transporter", "Gasunie DTS", "Europe", 100000)
+    t.addCompany (stub, compIDArr, "TRANSPORTER3", "Transporter", "Gasunie DTS", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "TRANSPORTER3")
     
-    t.addCompany (stub, compIDArr, "BUYER1", "Buyer", "EnBW", "Europe", 100000)
+    t.addCompany (stub, compIDArr, "BUYER1", "Buyer", "EnBW", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "BUYER1")
-    t.addCompany (stub, compIDArr, "BUYER2", "Buyer", "Vattenfall", "Europe", 100000)
+    t.addCompany (stub, compIDArr, "BUYER2", "Buyer", "Vattenfall", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "BUYER2")
     
-	//create Arrays for Each Type of User
+	//create default users
 	var userIDArr UserIDList
     t.addUser(stub, userIDArr, "producer1", "producer1", "PRODUCER1", "Producer")
     userIDArr = append(userIDArr, "producer1")
@@ -113,22 +128,38 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     userIDArr = append(userIDArr, "transporter1")
     t.addUser(stub, userIDArr, "transporter2", "transporter2", "TRANSPORTER2", "Transporter")
     userIDArr = append(userIDArr, "transporter2")
+    t.addUser(stub, userIDArr, "transporter3", "transporter3", "TRANSPORTER3", "Transporter")
+    userIDArr = append(userIDArr, "transporter3")
 	
     t.addUser(stub, userIDArr, "buyer1", "buyer1", "BUYER1", "Buyer")	
     userIDArr = append(userIDArr, "buyer1")
     t.addUser(stub, userIDArr, "buyer2", "buyer2", "BUYER2", "Buyer")	
     userIDArr = append(userIDArr, "buyer2")
     
+    //Create business plan for producers
+    var planID string
+    
+    planID = planIDPrefix + "PRODUCER1"
+    t.createBusinessPlan(planID, currentDate, 12.0, "Europe", 200, "Wardenburg", 200, "PRODUCER1")    
+    planID = planIDPrefix + "PRODUCER2"
+    t.createBusinessPlan(planID, currentDate, 10.0, "Europe", 300, "Ellund", 300, "PRODUCER2")
+    
+    //Create business plan for trasporters
+    planID = planIDPrefix + "TRANSPORTER1"
+    t.createBusinessPlan(planID, currentDate, 11.0, "Wardenburg", 200, "Bunder-Tief", 100, "TRANSPORTER1")    
+    planID = planIDPrefix + "TRANSPORTER2"
+    t.createBusinessPlan(planID, currentDate, 9.0, "Ellund", 300, "Steinbrink", 150, "TRANSPORTER2")
+    planID = planIDPrefix + "TRANSPORTER3"
+    t.createBusinessPlan(planID, currentDate, 8.0, "Ellund", 350, "Steinitz", 175, "TRANSPORTER3")
+    
 	return nil, nil
 }
 
 func (t *SimpleChaincode) addCompany (stub shim.ChaincodeStubInterface, compIDArr CompanyIDList, compID string, 
-				       compType string, compName string, compLoc string, bankBalance float64 ) bool {
+				       compType string, compName string, compLoc string, bankBalance float64,  balanceDate string) bool {
     fmt.Println("Adding new company:"+ compName)
-    
+   
 	var newCompany company
-    current_time := time.Now().Local()
-    var balanceDate = current_time.Format("21/10/2017")
     
 	newCompany = company{CompanyID: compID, CompanyType: compType, CompanyName: compName, 
                          CompanyLocation: compLoc, BankBalance: bankBalance, BalanceUpdatedDate: balanceDate}
@@ -251,6 +282,7 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var userName, returnMessage string
     var compStruct company
+    var busPlanStruct businessPlan
 	var userInfoObj userInfo
     
 	if len(args) != 2 {
@@ -279,6 +311,11 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
         userInfoObj.UserID = userName
         userInfoObj.Company = compStruct
         fmt.Println(userInfoObj)
+        
+        //Get Business Plan info
+        bpInfo, _ := stub.GetState(planIDPrefix + compID)	
+        _ = json.Unmarshal(bpInfo, &busPlanStruct)
+        userInfoObj.BusinessPlan = busPlanStruct
         
         userInfoObjBytes, err2 := json.Marshal(userInfoObj)
         if err2 != nil {
@@ -400,11 +437,43 @@ func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[
 	return nil, nil
 }
 
+func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+    var planID, compID, planDate, entryLocation, exitLocation string
+    var gasPrice, entryCapacity, exitCapacity float64
+    var businessPlanObj businessPlan
+
+    if len(args) < 7 {
+		return nil, errors.New("Incorrect number of arguments. 7 expected")
+	}
+    
+    planID = args[0]
+    planDate = args[1]
+    gasPrice , _ = strconv.ParseFloat(args[2], 64)
+    entryLocation = args[3]
+    entryCapacity, _ = strconv.Atoi(args[4])
+    exitLocation = args[5]
+    exitCapacity, _ = strconv.Atoi(args[6])    
+    compID = args[7]
+    
+    businessPlanObj = businessPlan{PlanID: planID, PlanDate: planDate, GasPrice: gasPrice, EntryLocation: entryLocation, EntryCapacity: entryCapacity, ExitLocation: exitLocation, ExitCapacity: exitCapacity, CompanyID: compID}
+    
+    businessPlanObjBytes, err1 := json.Marshal(businessPlanObj)
+    if err1 != nil {
+		return nil, err1
+	}
+	_ = stub.PutState(planID, businessPlanObjBytes)
+    if err2 != nil {
+		return nil, err2
+	}
+    
+    return nil, nil
+}
+
 func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
     
 	var shipperID, tradeRequestIDString, producerID, entryLocation, tradeRequestStartDate, tradeRequestEndDate, tradeRequestStatus string
 	var tradeRequestID, tradeRequestInvoiceID, tradeRequestIncidentID int
-	var energyKWH, gasPrice float64
+	var energyMWH, gasPrice float64
 	var tradeRequestObj tradeRequest
 
 	var tradeRequestIDArr TradeRequestIDList
@@ -419,7 +488,7 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
 	tradeRequestID, _ = strconv.Atoi(args[0])
 	shipperID = args[1]
 	producerID = args[2]
-	energyKWH, _ = strconv.ParseFloat(args[3], 64)
+	energyMWH, _ = strconv.ParseFloat(args[3], 64)
 	gasPrice, _ = strconv.ParseFloat(args[4], 64)
 	entryLocation = args[5]
 	tradeRequestStartDate = args[6]
@@ -429,7 +498,7 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
 	tradeRequestIncidentID = 0
 
 	tradeRequestObj = tradeRequest{TradeRequestID: tradeRequestID, ShipperID: shipperID, ProducerID: producerID,
-	EnergyKWH: energyKWH, GasPrice: gasPrice, EntryLocation: entryLocation, TradeRequestStartDate: tradeRequestStartDate,
+	EnergyMWH: energyMWH, GasPrice: gasPrice, EntryLocation: entryLocation, TradeRequestStartDate: tradeRequestStartDate,
 	TradeRequestEndDate: tradeRequestEndDate, TradeRequestStatus: tradeRequestStatus, TradeRequestInvoiceID: tradeRequestInvoiceID,
 	TradeRequestIncidentID: tradeRequestIncidentID}
 
