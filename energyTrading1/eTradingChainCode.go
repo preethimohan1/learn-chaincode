@@ -459,6 +459,8 @@ func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, p
 }
 
 func (t *SimpleChaincode) updateBusinessPlan(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+    fmt.Println("Entering function updateBusinessPlan()")
+    
     var gasPrice float64
     var entryCapacity, exitCapacity int
     gasPrice, _ = strconv.ParseFloat(args[2], 64)
@@ -658,6 +660,10 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.changePassword(stub, args)
 	} else if function == "updateTradeRequestStatus" {
 		return t.updateTradeRequestStatus(stub, args)
+	} else if function == "updateBusinessPlan" {
+		return t.updateBusinessPlan(stub, args)
+	} else if function == "topupBankBalance" {
+		return t.topupBankBalance(stub, args)
 	}
  
 	fmt.Println("Invoke did not find function:" + function)
