@@ -463,7 +463,7 @@ func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, p
     if err1 != nil {
 		return nil, err1
 	}
-	_ = stub.PutState(planID, businessPlanObjBytes)
+	_, err2 = stub.PutState(planID, businessPlanObjBytes)
     if err2 != nil {
 		return nil, err2
 	}
