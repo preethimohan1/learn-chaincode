@@ -465,7 +465,7 @@ func (t *SimpleChaincode) updateBusinessPlan(stub shim.ChaincodeStubInterface, a
     entryCapacity, _ = strconv.Atoi(args[4])
     exitCapacity, _ = strconv.Atoi(args[6])
     
-    _, err := t.createBusinessPlan(args[0], args[1], gasPrice, args[3], entryCapacity, args[5], exitCapacity, args[7])
+    _, err := t.createBusinessPlan(stub, args[0], args[1], gasPrice, args[3], entryCapacity, args[5], exitCapacity, args[7])
     if err != nil {
 		return nil, err
 	}
