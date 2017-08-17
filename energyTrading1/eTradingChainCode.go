@@ -598,17 +598,17 @@ func (t *SimpleChaincode) createContract(stub shim.ChaincodeStubInterface, idArr
 }
 
 func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-    fmt.Println("Creating new trade request: " + contractIDString)
+    fmt.Println("Creating new trade request: " + args[0])
     return t.createContract(stub, tradeRequestKey, args)
 }
 
 func (t *SimpleChaincode) createTransportRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-    fmt.Println("Creating new transport request: " + contractIDString)
+    fmt.Println("Creating new transport request: " + args[0])
     return t.createContract(stub, transportRequestKey, args)
 }
 
 func (t *SimpleChaincode) createGasRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-    fmt.Println("Creating new gas request: " + contractIDString)
+    fmt.Println("Creating new gas request: " + args[0])
     return t.createContract(stub, gasRequestKey, args)
 }
 
@@ -706,15 +706,15 @@ func (t *SimpleChaincode) getContractList(stub shim.ChaincodeStubInterface, idAr
 }
 
 func (t *SimpleChaincode) getTradeRequestList(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-    return t.getContractList(stuc, tradeRequestKey, args)
+    return t.getContractList(stub, tradeRequestKey, args)
 }
 
 func (t *SimpleChaincode) getTransportRequestList(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-    return t.getContractList(stuc, transportRequestKey, args)
+    return t.getContractList(stub, transportRequestKey, args)
 }
 
 func (t *SimpleChaincode) getGasRequestList(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-    return t.getContractList(stuc, gasRequestKey, args)
+    return t.getContractList(stub, gasRequestKey, args)
 }
 
 func testEqualSlice (a []byte, b []byte) bool {
