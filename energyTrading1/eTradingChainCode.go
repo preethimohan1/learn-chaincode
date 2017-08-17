@@ -57,22 +57,22 @@ type businessPlanInfo struct {
     Company 	company `json:"company"`
 }
 
-type tradeRequest struct {
-	TradeRequestID         int     `json:"tr_id"`
-	ShipperID              string  `json:"tr_shipper_id"`
-	ProducerID             string  `json:"tr_producer_id"`
-	EnergyMWH              float64 `json:"tr_energy_mwh"`
-	TradeRequestStartDate  string  `json:"tr_start_date"`
-	TradeRequestEndDate    string  `json:"tr_end_date"`
-	TradeRequestStatus     string  `json:"tr_status"`
-	TradeRequestInvoiceID  int     `json:"tr_invoice_id"`
-	TradeRequestIncidentID int     `json:"tr_incident_id"`
+type contract struct {
+	ContractID         int     `json:"contract_id"`
+	InitiatorID        string  `json:"contract_initiator_id"`
+	ReceiverID         string  `json:"contract_receiver_id"`
+	EnergyMWH          float64 `json:"contract_energy_mwh"`
+	ContractStartDate  string  `json:"contract_start_date"`
+	ContractEndDate    string  `json:"contract_end_date"`
+	ContractStatus     string  `json:"contract_status"`
+	InvoiceID          int     `json:"contract_invoice_id"`
+	IncidentID         int     `json:"contract_incident_id"`
 }
 
-type tradeRequestInfo struct {
-    TradeRequest    tradeRequest    `json:"trade_request"`
-    ShipperCompany  company         `json:"shipper_company"`
-    ProducerCompany company         `json:"producer_company"`
+type contractInfo struct {
+    Contract     contract       `json:"contract"`
+    InitiatorCompany company    `json:"initiator_company"`
+    ReceiverCompany  company    `json:"receiver_company"`
 }
 
 type CompanyIDList []string
@@ -542,48 +542,57 @@ func (t *SimpleChaincode) updateBusinessPlan(stub shim.ChaincodeStubInterface, a
 }
 
 
-func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+func (t *SimpleChaincode) createContract(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
     
-	var shipperID, tradeRequestIDString, producerID, tradeRequestStartDate, tradeRequestEndDate, tradeRequestStatus string
-	var tradeRequestID, tradeRequestInvoiceID, tradeRequestIncidentID int
+	var initiatorID, contractIDString, receiverID, contractStartDate, contractEndDate, contractStatus string
+	var contractID, contractInvoiceID, contractIncidentID int
 	var energyMWH float64
-	var tradeRequestObj tradeRequest
-
-	var tradeRequestIDArr TradeRequestIDList
+	var contractObj contract
 
 	if len(args) < 6 {
 		return nil, errors.New("Incorrect number of arguments. 6 expected")
 	}
     
-    fmt.Println("Creating new trade request...")
+    fmt.Println("Creating new contract...")
 
-	tradeRequestIDString = args[0]
-	tradeRequestID, _ = strconv.Atoi(args[0])
-	shipperID = args[1]
-	producerID = args[2]
+	contractIDString = args[0]
+	contractID, _ = strconv.Atoi(args[0])
+	initiatorID = args[1]
+	receiverID = args[2]
 	energyMWH, _ = strconv.ParseFloat(args[3], 64)
-	tradeRequestStartDate = args[4]
-	tradeRequestEndDate = args[5]
-	tradeRequestStatus = "New"	
-	tradeRequestInvoiceID = 0
-	tradeRequestIncidentID = 0
+	contractStartDate = args[4]
+	contractEndDate = args[5]
+	contractStatus = "New"	
+	contractInvoiceID = 0
+	contractIncidentID = 0
 
-	tradeRequestObj = tradeRequest{TradeRequestID: tradeRequestID, ShipperID: shipperID, ProducerID: producerID,
-	EnergyMWH: energyMWH, TradeRequestStartDate: tradeRequestStartDate, TradeRequestEndDate: tradeRequestEndDate, 
-	TradeRequestStatus: tradeRequestStatus, TradeRequestInvoiceID: tradeRequestInvoiceID,
-	TradeRequestIncidentID: tradeRequestIncidentID}
+	contractObj = contract{ContractID: contractID, InitiatorID: initiatorID, ReceiverID: receiverID,
+	EnergyMWH: energyMWH, ContractStartDate: contractStartDate, ContractEndDate: contractEndDate, 
+	ContractStatus: contractStatus, InvoiceID: contractInvoiceID,
+	IncidentID: contractIncidentID}
 
 	//Putting on RocksDB database.
-	tradeRequestObjBytes, err1 := json.Marshal(tradeRequestObj)
+	contractObjBytes, err1 := json.Marshal(contractObj)
 	if err1 != nil {
 		return nil, err1
 	}
-	_ = stub.PutState(tradeRequestIDString, tradeRequestObjBytes)
+	_ = stub.PutState(contractIDString, contractObjBytes)
+    
+	return nil, nil
+}
 
-	//Putting in TR ID list    
-	tradeRequestIDListObjBytes, err2 := stub.GetState(tradeRequestKey)
-	if err2 != nil {
-		return nil, err2
+func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+    var tradeRequestIDString string
+    var tradeRequestIDArr TradeRequestIDList
+    
+    fmt.Println("Creating new trade request...")
+    t.createContract(stub, args)
+    
+    //Putting in TR ID list  
+    tradeRequestIDString = args[0]
+	tradeRequestIDListObjBytes, err := stub.GetState(tradeRequestKey)
+	if err != nil {
+		return nil, err
 	}
 	if tradeRequestIDListObjBytes != nil {
 		_ = json.Unmarshal(tradeRequestIDListObjBytes, &tradeRequestIDArr)
@@ -591,35 +600,36 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
     tradeRequestIDArr = append(tradeRequestIDArr, tradeRequestIDString)	
     tradeRequestIDListObjBytes, _ = json.Marshal(&tradeRequestIDArr)
     _ = stub.PutState(tradeRequestKey, tradeRequestIDListObjBytes)
+    
     fmt.Println(tradeRequestIDArr)
     
-	return nil, nil
+    return nil nil
 }
 
-func (t *SimpleChaincode) updateTradeRequestStatus(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-	var tradeRequestIDString string
-	var tradeRequestObj tradeRequest
+func (t *SimpleChaincode) updateContractStatus(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+	var contractIDString string
+	var contractObj contract
 	
 	if len(args) < 2 {
-		return nil, errors.New("Incorrect number of arguments. 2 expected (TradeRequestID and TradeRequestStatus)")
+		return nil, errors.New("Incorrect number of arguments. 2 expected (ContractID and ContractStatus)")
 	}
 	
-	tradeRequestIDString = args[0]
-	tradeRequestObjBytes, _ := stub.GetState(tradeRequestIDString)
-	err1 := json.Unmarshal(tradeRequestObjBytes, &tradeRequestObj)
+	contractIDString = args[0]
+	contractObjBytes, _ := stub.GetState(contractIDString)
+	err1 := json.Unmarshal(contractObjBytes, &contractObj)
 	if err1 != nil {
 		return nil, err1
 	}
 	
 	//Update the status
-	tradeRequestObj.TradeRequestStatus = args[1]
+	contractObj.ContractStatus = args[1]
 	
 	//Save the updated trade request
-	tradeRequestBytes, err2 := json.Marshal(&tradeRequestObj)
+	contractBytes, err2 := json.Marshal(&contractObj)
 	if err2 != nil {
 		return nil, err2
 	}
-	err3 := stub.PutState(tradeRequestIDString, tradeRequestBytes)
+	err3 := stub.PutState(contractIDString, contractBytes)
 	if err3 != nil {
 		return nil, err3
 	}
@@ -627,21 +637,21 @@ func (t *SimpleChaincode) updateTradeRequestStatus(stub shim.ChaincodeStubInterf
 	return nil, nil
 }
 
-/*func (t *SimpleChaincode) getTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-	var tradeRequestID string
+/*func (t *SimpleChaincode) getContract(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+	var contractID string
 	
-	tradeRequestID = args[0]
-	tradeRequestObjBytes, _ := stub.GetState(tradeRequestID)
-	return []byte(string(tradeRequestObjBytes)), nil
+	contractID = args[0]
+	contractObjBytes, _ := stub.GetState(contractID)
+	return []byte(string(contractObjBytes)), nil
 }*/
 
 func (t *SimpleChaincode) getTradeRequestList(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
 	var companyID, returnMessage string
 	var lenMap int	
     var trList TradeRequestIDList
-    var tradeRequestObj tradeRequest
-    var tradeRequestFullObj tradeRequestInfo
-    var shipperCompany, producerCompany company
+    var contractObj contract
+    var contractFullObj contractInfo
+    var initiatorCompany, receiverCompany company
     
     companyID = args[0]
     
@@ -655,29 +665,29 @@ func (t *SimpleChaincode) getTradeRequestList(stub shim.ChaincodeStubInterface, 
 
 	for _, k := range trList {
         
-		tradeRequestObjBytes, _ := stub.GetState(k)
-        _ = json.Unmarshal(tradeRequestObjBytes, &tradeRequestObj)
-        fmt.Println(tradeRequestObj)
+		contractObjBytes, _ := stub.GetState(k)
+        _ = json.Unmarshal(contractObjBytes, &contractObj)
+        fmt.Println(contractObj)
         
-        if(tradeRequestObj.ShipperID == companyID || tradeRequestObj.ProducerID == companyID) {
-            tradeRequestFullObj.TradeRequest = tradeRequestObj
+        if(contractObj.InitiatorID == companyID || contractObj.ReceiverID == companyID) {
+            contractFullObj.Contract = contractObj
             
-            //Get shipper object
-            shipperObjBytes, _ := stub.GetState(tradeRequestObj.ShipperID)
-            _ = json.Unmarshal(shipperObjBytes, &shipperCompany)
-            tradeRequestFullObj.ShipperCompany = shipperCompany
+            //Add Initiator company object
+            initiatorObjBytes, _ := stub.GetState(contractObj.InitiatorID)
+            _ = json.Unmarshal(initiatorObjBytes, &initiatorCompany)
+            contractFullObj.InitiatorCompany = initiatorCompany
             
-            //Get producer object
-            producerObjBytes, _ := stub.GetState(tradeRequestObj.ProducerID)
-            _ = json.Unmarshal(producerObjBytes, &producerCompany)
-            tradeRequestFullObj.ProducerCompany = producerCompany
+            //Add Receiver company object
+            receiverObjBytes, _ := stub.GetState(contractObj.ReceiverID)
+            _ = json.Unmarshal(receiverObjBytes, &receiverCompany)
+            contractFullObj.ReceiverCompany = receiverCompany
             
-            tradeRequestFullObjBytes, err1 := json.Marshal(tradeRequestFullObj)
+            contractFullObjBytes, err1 := json.Marshal(contractFullObj)
             if err1 != nil {
               return nil, err1
             }
             
-            returnMessage = returnMessage + string(tradeRequestFullObjBytes)
+            returnMessage = returnMessage + string(contractFullObjBytes)
             
             lenMap = lenMap - 1
             if (lenMap!= 0) {
@@ -723,8 +733,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.createTradeRequest(stub, args)
 	} else if function == "changePassword" {
 		return t.changePassword(stub, args)
-	} else if function == "updateTradeRequestStatus" {
-		return t.updateTradeRequestStatus(stub, args)
+	} else if function == "updateContractStatus" {
+		return t.updateContractStatus(stub, args)
 	} else if function == "updateBusinessPlan" {
 		return t.updateBusinessPlan(stub, args)
 	} else if function == "topupBankBalance" {
