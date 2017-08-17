@@ -457,7 +457,7 @@ func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[
 
 func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, bpIDList BusinessPlanIDList, planID string, 
                                              planDate string, gasPrice float64, entryLocation string, entryCapacity int, exitLocation string, exitCapacity int, compID string) ([]byte, error) {
-    fmt.Println("Entering function createBusinessPlan()")
+    fmt.Println("Creating new Business Plan: " + planID)
     
     var businessPlanObj businessPlan
     
@@ -473,12 +473,14 @@ func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, b
 	}
     
     //Add the plan IDs into array of business plan ID
-    if bpIDList == nil {
+    if bpIDList != nil {
         bpIDList = append(bpIDList, planID)
         bpIDListBytes, _ := json.Marshal(bpIDList)
-        _ = stub.PutState(planKey, bpIDListBytes)      
+        _ = stub.PutState(planKey, bpIDListBytes) 
+        
+        fmt.Println(bpIDList)
     }
-    
+        
     return nil, nil
 }
 
