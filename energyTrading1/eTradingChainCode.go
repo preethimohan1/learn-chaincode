@@ -702,7 +702,7 @@ func (t *SimpleChaincode) updateContractStatus(stub shim.ChaincodeStubInterface,
 func (t *SimpleChaincode) getTradeRequestList(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
 	var companyID, returnMessage string
 	var lenMap int	
-    var trList TradeRequestIDList
+    var trList string[]
     var contractObj contract
     var contractFullObj contractInfo
     var initiatorCompany, receiverCompany company
