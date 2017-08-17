@@ -32,7 +32,7 @@ type company struct {
 }
 
 type user struct {
-	UserID		string 	`json:"user_id"`
+	UserID		    string 	`json:"user_id"`
 	Password 		string	`json:"user_password"`
     CompanyID 		string 	`json:"company_id"`
 }
@@ -49,14 +49,14 @@ type businessPlan struct {
 }
 
 type userInfo struct {
-	UserID		string 	`json:"user_id"`
-    Company 	company `json:"company"`
+	UserID		 string 	  `json:"user_id"`
+    Company 	 company      `json:"company"`
     BusinessPlan businessPlan `json:"business_plan"`
 }
 
 type businessPlanInfo struct {    
-    BusinessPlan businessPlan `json:"business_plan"`
-    Company 	company `json:"company"`
+    BusinessPlan businessPlan  `json:"business_plan"`
+    Company 	 company       `json:"company"`
 }
 
 type contract struct {
@@ -79,9 +79,6 @@ type contractInfo struct {
 
 type CompanyIDList []string
 type UserIDList []string
-type TradeRequestIDList []string
-type TransportRequestIDList []string
-type GasRequestIDList []string
 type BusinessPlanIDList []string
 
 func main() {
@@ -546,13 +543,14 @@ func (t *SimpleChaincode) updateBusinessPlan(stub shim.ChaincodeStubInterface, a
 }
 
 
-func (t *SimpleChaincode) createContract(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+func (t *SimpleChaincode) createContract(stub shim.ChaincodeStubInterface, idArrKey string, args[] string) ([]byte, error) {
     
 	var initiatorID, contractIDString, receiverID, contractStartDate, contractEndDate, contractStatus string
 	var contractID, contractInvoiceID, contractIncidentID int
 	var energyMWH float64
 	var contractObj contract
-
+    var contractIDArr []string
+    
 	if len(args) < 6 {
 		return nil, errors.New("Incorrect number of arguments. 6 expected")
 	}
@@ -582,82 +580,36 @@ func (t *SimpleChaincode) createContract(stub shim.ChaincodeStubInterface, args[
 	}
 	_ = stub.PutState(contractIDString, contractObjBytes)
     
+    //Putting contract ID in Contract ID array  
+	contractIDListObjBytes, err := stub.GetState(idArrKey)
+	if err != nil {
+		return nil, err
+	}
+	if contractIDListObjBytes != nil {
+		_ = json.Unmarshal(contractIDListObjBytes, &contractIDArr)
+	}    
+    contractIDArr = append(contractIDArr, contractIDString)	
+    contractIDListObjBytes, _ = json.Marshal(&contractIDArr)
+    _ = stub.PutState(idArrKey, contractIDListObjBytes)
+    
+    fmt.Println(contractIDArr)
+    
 	return nil, nil
 }
 
 func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-    var contractIDString string
-    var contractIDArr TradeRequestIDList
-    contractIDString = args[0]
-    
     fmt.Println("Creating new trade request: " + contractIDString)
-    t.createContract(stub, args)
-    
-    //Putting in TR ID list  
-	contractIDListObjBytes, err := stub.GetState(tradeRequestKey)
-	if err != nil {
-		return nil, err
-	}
-	if contractIDListObjBytes != nil {
-		_ = json.Unmarshal(contractIDListObjBytes, &contractIDArr)
-	}    
-    contractIDArr = append(contractIDArr, contractIDString)	
-    contractIDListObjBytes, _ = json.Marshal(&contractIDArr)
-    _ = stub.PutState(tradeRequestKey, contractIDListObjBytes)
-    
-    fmt.Println(contractIDArr)
-    
-    return nil, nil
+    return t.createContract(stub, tradeRequestKey, args)
 }
 
 func (t *SimpleChaincode) createTransportRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-    var contractIDString string
-    var contractIDArr TransportRequestIDList
-    contractIDString = args[0]
-    
     fmt.Println("Creating new transport request: " + contractIDString)
-    t.createContract(stub, args)
-    
-    //Putting in TR ID list 
-	contractIDListObjBytes, err := stub.GetState(transportRequestKey)
-	if err != nil {
-		return nil, err
-	}
-	if contractIDListObjBytes != nil {
-		_ = json.Unmarshal(contractIDListObjBytes, &contractIDArr)
-	}    
-    contractIDArr = append(contractIDArr, contractIDString)	
-    contractIDListObjBytes, _ = json.Marshal(&contractIDArr)
-    _ = stub.PutState(transportRequestKey, contractIDListObjBytes)
-    
-    fmt.Println(contractIDArr)
-    
-    return nil, nil
+    return t.createContract(stub, transportRequestKey, args)
 }
 
 func (t *SimpleChaincode) createGasRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-    var contractIDString string
-    var contractIDArr GasRequestIDList
-    contractIDString = args[0]
-    
-    fmt.Println("Creating new transport request: " + contractIDString)
-    t.createContract(stub, args)
-    
-    //Putting in TR ID list 
-	contractIDListObjBytes, err := stub.GetState(gasRequestKey)
-	if err != nil {
-		return nil, err
-	}
-	if contractIDListObjBytes != nil {
-		_ = json.Unmarshal(contractIDListObjBytes, &contractIDArr)
-	}    
-    contractIDArr = append(contractIDArr, contractIDString)	
-    contractIDListObjBytes, _ = json.Marshal(&contractIDArr)
-    _ = stub.PutState(gasRequestKey, contractIDListObjBytes)
-    
-    fmt.Println(contractIDArr)
-    
-    return nil, nil
+    fmt.Println("Creating new gas request: " + contractIDString)
+    return t.createContract(stub, gasRequestKey, args)
 }
 
 func (t *SimpleChaincode) updateContractStatus(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
@@ -699,25 +651,25 @@ func (t *SimpleChaincode) updateContractStatus(stub shim.ChaincodeStubInterface,
 	return []byte(string(contractObjBytes)), nil
 }*/
 
-func (t *SimpleChaincode) getTradeRequestList(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+func (t *SimpleChaincode) getContractList(stub shim.ChaincodeStubInterface, idArrKey string, args[] string) ([]byte, error) {
 	var companyID, returnMessage string
 	var lenMap int	
-    var trList []string
+    var contractIDList []string
     var contractObj contract
     var contractFullObj contractInfo
     var initiatorCompany, receiverCompany company
     
     companyID = args[0]
     
-    fmt.Println("Getting Trade requests for company: "+ companyID)
+    fmt.Println("Getting Contracts for company: "+ companyID)
 	
-	trLisObjBytes, _ := stub.GetState(tradeRequestKey)
-	_ = json.Unmarshal(trLisObjBytes, &trList)
+	contractListObjBytes, _ := stub.GetState(idArrKey)
+	_ = json.Unmarshal(contractListObjBytes, &contractIDList)
     
-	lenMap = len(trList)
+	lenMap = len(contractIDList)
 	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
 
-	for _, k := range trList {
+	for _, k := range contractIDList {
         
 		contractObjBytes, _ := stub.GetState(k)
         _ = json.Unmarshal(contractObjBytes, &contractObj)
@@ -751,6 +703,18 @@ func (t *SimpleChaincode) getTradeRequestList(stub shim.ChaincodeStubInterface, 
 	}
 	returnMessage = returnMessage + "]}"
 	return []byte(returnMessage), nil
+}
+
+func (t *SimpleChaincode) getTradeRequestList(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+    return t.getContractList(stuc, tradeRequestKey, args)
+}
+
+func (t *SimpleChaincode) getTransportRequestList(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+    return t.getContractList(stuc, transportRequestKey, args)
+}
+
+func (t *SimpleChaincode) getGasRequestList(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+    return t.getContractList(stuc, gasRequestKey, args)
 }
 
 func testEqualSlice (a []byte, b []byte) bool {
@@ -817,6 +781,10 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.getCompanyList(stub, args)
 	} else if function == "getTradeRequestList" {
 		return t.getTradeRequestList(stub, args)
+    } else if function == "getTransportRequestList" {
+		return t.getTransportRequestList(stub, args)
+    } else if function == "getGasRequestList" {
+		return t.getGasRequestList(stub, args)
     } else if function == "getBusinessPlanList" {
 		return t.getBusinessPlanList(stub, args)
     }
