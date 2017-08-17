@@ -473,9 +473,11 @@ func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, b
 	}
     
     //Add the plan IDs into array of business plan ID
-    bpIDList = append(bpIDList, userName)
-    bpIDListBytes, _ := json.Marshal(bpIDList)
-    _ = stub.PutState(planKey, bpIDListBytes)      
+    if bpIDList == nil {
+        bpIDList = append(bpIDList, planID)
+        bpIDListBytes, _ := json.Marshal(bpIDList)
+        _ = stub.PutState(planKey, bpIDListBytes)      
+    }
     
     return nil, nil
 }
@@ -497,7 +499,7 @@ func (t *SimpleChaincode) getBusinessPlanList(stub shim.ChaincodeStubInterface, 
     
 	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
 	lenArr = len(bpIDArr)
-	for _, k := range compIDArr {
+	for _, k := range bpIDArr {
         //Fetch the Business plan
 		bpObjBytes, _ := stub.GetState(k)
         _ = json.Unmarshal(bpObjBytes, &bpObj)
@@ -511,8 +513,9 @@ func (t *SimpleChaincode) getBusinessPlanList(stub shim.ChaincodeStubInterface, 
         fmt.Println(companyObj)
         
         bpInfoObj.Company = companyObj;
+        bpInfoObjBytes, _ := json.Marshal(bpInfoObj)
         
-        returnMessage = returnMessage + string(bpInfoObj) 
+        returnMessage = returnMessage + string(bpInfoObjBytes) 
         lenArr = lenArr - 1 
         if (lenArr != 0) {
             returnMessage = returnMessage + ","
@@ -530,8 +533,8 @@ func (t *SimpleChaincode) updateBusinessPlan(stub shim.ChaincodeStubInterface, a
     gasPrice, _ = strconv.ParseFloat(args[2], 64)
     entryCapacity, _ = strconv.Atoi(args[4])
     exitCapacity, _ = strconv.Atoi(args[6])
-    
-    _, err := t.createBusinessPlan(stub, args[0], args[1], gasPrice, args[3], entryCapacity, args[5], exitCapacity, args[7])
+       
+    _, err := t.createBusinessPlan(stub, nil, args[0], args[1], gasPrice, args[3], entryCapacity, args[5], exitCapacity, args[7])
     if err != nil {
 		return nil, err
 	}
