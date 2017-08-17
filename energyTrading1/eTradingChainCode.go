@@ -485,7 +485,7 @@ func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, b
 func (t *SimpleChaincode) getBusinessPlanList(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var lenArr int
 	var bpIDArr BusinessPlanIDList
-	var companyType, returnMessage string
+	var returnMessage string
     var bpObj businessPlan
     var companyObj company
     var bpInfoObj businessPlanInfo
