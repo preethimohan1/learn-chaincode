@@ -13,6 +13,8 @@ import (
 var companyKey = "COMPANYIDLIST"
 var userIDAffix = "USERLIST"
 var tradeRequestKey = "TRADEREQUESTIDLIST"
+var transportRequestKey = "TRANSPORTREQUESTIDLIST"
+var gasRequestKey = "GASREQUESTIDLIST"
 var planKey = "PLANIDLIST"
 var planIDPrefix = "PLAN_"
 
@@ -78,6 +80,8 @@ type contractInfo struct {
 type CompanyIDList []string
 type UserIDList []string
 type TradeRequestIDList []string
+type TransportRequestIDList []string
+type GasRequestIDList []string
 type BusinessPlanIDList []string
 
 func main() {
@@ -582,26 +586,76 @@ func (t *SimpleChaincode) createContract(stub shim.ChaincodeStubInterface, args[
 }
 
 func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-    var tradeRequestIDString string
-    var tradeRequestIDArr TradeRequestIDList
+    var contractIDString string
+    var contractIDArr TradeRequestIDList
+    contractIDString = args[0]
     
-    fmt.Println("Creating new trade request...")
+    fmt.Println("Creating new trade request: " + contractIDString)
     t.createContract(stub, args)
     
     //Putting in TR ID list  
-    tradeRequestIDString = args[0]
-	tradeRequestIDListObjBytes, err := stub.GetState(tradeRequestKey)
+	contractIDListObjBytes, err := stub.GetState(tradeRequestKey)
 	if err != nil {
 		return nil, err
 	}
-	if tradeRequestIDListObjBytes != nil {
-		_ = json.Unmarshal(tradeRequestIDListObjBytes, &tradeRequestIDArr)
+	if contractIDListObjBytes != nil {
+		_ = json.Unmarshal(contractIDListObjBytes, &contractIDArr)
 	}    
-    tradeRequestIDArr = append(tradeRequestIDArr, tradeRequestIDString)	
-    tradeRequestIDListObjBytes, _ = json.Marshal(&tradeRequestIDArr)
-    _ = stub.PutState(tradeRequestKey, tradeRequestIDListObjBytes)
+    contractIDArr = append(contractIDArr, contractIDString)	
+    contractIDListObjBytes, _ = json.Marshal(&contractIDArr)
+    _ = stub.PutState(tradeRequestKey, contractIDListObjBytes)
     
-    fmt.Println(tradeRequestIDArr)
+    fmt.Println(contractIDArr)
+    
+    return nil, nil
+}
+
+func (t *SimpleChaincode) createTransportRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+    var contractIDString string
+    var contractIDArr TransportRequestIDList
+    contractIDString = args[0]
+    
+    fmt.Println("Creating new transport request: " + contractIDString)
+    t.createContract(stub, args)
+    
+    //Putting in TR ID list 
+	contractIDListObjBytes, err := stub.GetState(transportRequestKey)
+	if err != nil {
+		return nil, err
+	}
+	if contractIDListObjBytes != nil {
+		_ = json.Unmarshal(contractIDListObjBytes, &contractIDArr)
+	}    
+    contractIDArr = append(contractIDArr, contractIDString)	
+    contractIDListObjBytes, _ = json.Marshal(&contractIDArr)
+    _ = stub.PutState(transportRequestKey, contractIDListObjBytes)
+    
+    fmt.Println(contractIDArr)
+    
+    return nil, nil
+}
+
+func (t *SimpleChaincode) createGasRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+    var contractIDString string
+    var contractIDArr GasRequestIDList
+    contractIDString = args[0]
+    
+    fmt.Println("Creating new transport request: " + contractIDString)
+    t.createContract(stub, args)
+    
+    //Putting in TR ID list 
+	contractIDListObjBytes, err := stub.GetState(gasRequestKey)
+	if err != nil {
+		return nil, err
+	}
+	if contractIDListObjBytes != nil {
+		_ = json.Unmarshal(contractIDListObjBytes, &contractIDArr)
+	}    
+    contractIDArr = append(contractIDArr, contractIDString)	
+    contractIDListObjBytes, _ = json.Marshal(&contractIDArr)
+    _ = stub.PutState(gasRequestKey, contractIDListObjBytes)
+    
+    fmt.Println(contractIDArr)
     
     return nil, nil
 }
@@ -731,6 +785,10 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.register(stub, args)
 	} else if function == "createTradeRequest" {
 		return t.createTradeRequest(stub, args)
+	} else if function == "createTransportRequest" {
+		return t.createTransportRequest(stub, args)
+	} else if function == "createGasRequest" {
+		return t.createGasRequest(stub, args)
 	} else if function == "changePassword" {
 		return t.changePassword(stub, args)
 	} else if function == "updateContractStatus" {
