@@ -13,6 +13,7 @@ import (
 var companyKey = "COMPANYIDLIST"
 var userIDAffix = "USERLIST"
 var tradeRequestKey = "TRADEREQUESTIDLIST"
+var planKey = "PLANIDLIST"
 var planIDPrefix = "PLAN_"
 
 type SimpleChaincode struct {
@@ -34,12 +35,6 @@ type user struct {
     CompanyID 		string 	`json:"company_id"`
 }
 
-type userInfo struct {
-	UserID		string 	`json:"user_id"`
-    Company 	company `json:"company"`
-    BusinessPlan businessPlan `json:"business_plan"`
-}
-
 type businessPlan struct {
 	PlanID 		    string 	`json:"bp_plan_id"`
     PlanDate 		string 	`json:"bp_plan_date"`
@@ -49,6 +44,17 @@ type businessPlan struct {
 	ExitLocation 	string	`json:"bp_exit_location"`
 	ExitCapacity	int	    `json:"bp_exit_capacity"`
     CompanyID 		string 	`json:"bp_company_id"`
+}
+
+type userInfo struct {
+	UserID		string 	`json:"user_id"`
+    Company 	company `json:"company"`
+    BusinessPlan businessPlan `json:"business_plan"`
+}
+
+type businessPlanInfo struct {    
+    BusinessPlan businessPlan `json:"business_plan"`
+    Company 	company `json:"company"`
 }
 
 type tradeRequest struct {
@@ -74,6 +80,7 @@ type tradeRequestInfo struct {
 type CompanyIDList []string
 type UserIDList []string
 type TradeRequestIDList []string
+type BusinessPlanIDList []string
 
 func main() {
 	err := shim.Start(new(SimpleChaincode))
@@ -139,19 +146,26 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     
     //Create business plan for producers
     var planID string
-    
+    var bpIDList BusinessPlanIDList
     planID = planIDPrefix + "PRODUCER1"
-    t.createBusinessPlan(stub, planID, currentDate, 12.0, "Europe", 200, "Wardenburg", 200, "PRODUCER1")    
+    t.createBusinessPlan(stub, bpIDList, planID, currentDate, 12.0, "Europe", 200, "Wardenburg", 200, "PRODUCER1")     
+    bpIDList = append(bpIDList, planID)
     planID = planIDPrefix + "PRODUCER2"
-    t.createBusinessPlan(stub, planID, currentDate, 10.0, "Europe", 300, "Ellund", 300, "PRODUCER2")
+    t.createBusinessPlan(stub, bpIDList, planID, currentDate, 10.0, "Europe", 300, "Ellund", 300, "PRODUCER2")
+    bpIDList = append(bpIDList, planID)
     
     //Create business plan for trasporters
     planID = planIDPrefix + "TRANSPORTER1"
-    t.createBusinessPlan(stub, planID, currentDate, 11.0, "Wardenburg", 200, "Bunder-Tief", 100, "TRANSPORTER1")    
+    t.createBusinessPlan(stub, bpIDList, planID, currentDate, 11.0, "Wardenburg", 200, "Bunder-Tief", 100, "TRANSPORTER1")  
+    bpIDList = append(bpIDList, planID)
+    
     planID = planIDPrefix + "TRANSPORTER2"
-    t.createBusinessPlan(stub, planID, currentDate, 9.0, "Ellund", 300, "Steinbrink", 150, "TRANSPORTER2")
+    t.createBusinessPlan(stub, bpIDList, planID, currentDate, 9.0, "Ellund", 300, "Steinbrink", 150, "TRANSPORTER2")
+    bpIDList = append(bpIDList, planID)
+    
     planID = planIDPrefix + "TRANSPORTER3"
-    t.createBusinessPlan(stub, planID, currentDate, 8.0, "Ellund", 350, "Steinitz", 175, "TRANSPORTER3")
+    t.createBusinessPlan(stub, bpIDList, planID, currentDate, 8.0, "Ellund", 350, "Steinitz", 175, "TRANSPORTER3")
+    bpIDList = append(bpIDList, planID)
     
 	return nil, nil
 }
@@ -226,6 +240,7 @@ func (t *SimpleChaincode) getCompanyList(stub shim.ChaincodeStubInterface, args 
 	return []byte(returnMessage), nil
 
 }
+
 
 func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr UserIDList, userName string, 
 				       password string, compID string, compType string ) bool {
@@ -440,8 +455,8 @@ func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[
 	return nil, nil
 }
 
-func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, planID string, planDate string, gasPrice float64,
-                                            entryLocation string, entryCapacity int, exitLocation string, exitCapacity int, compID string) ([]byte, error) {
+func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, bpIDList BusinessPlanIDList, planID string, 
+                                             planDate string, gasPrice float64, entryLocation string, entryCapacity int, exitLocation string, exitCapacity int, compID string) ([]byte, error) {
     fmt.Println("Entering function createBusinessPlan()")
     
     var businessPlanObj businessPlan
@@ -457,7 +472,54 @@ func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, p
 		return nil, err2
 	}
     
+    //Add the plan IDs into array of business plan ID
+    bpIDList = append(bpIDList, userName)
+    bpIDListBytes, _ := json.Marshal(bpIDList)
+    _ = stub.PutState(planKey, bpIDListBytes)      
+    
     return nil, nil
+}
+
+func (t *SimpleChaincode) getBusinessPlanList(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var lenArr int
+	var bpIDArr BusinessPlanIDList
+	var companyType, returnMessage string
+    var bpObj businessPlan
+    var companyObj company
+    var bpInfoObj businessPlanInfo
+    
+	fmt.Println("Getting all business plans.")
+    
+    bpIDArrBytes, _ := stub.GetState(planKey)
+	_ = json.Unmarshal(bpIDArrBytes, &bpIDArr)
+    
+   fmt.Println(bpIDArr)
+    
+	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
+	lenArr = len(bpIDArr)
+	for _, k := range compIDArr {
+        //Fetch the Business plan
+		bpObjBytes, _ := stub.GetState(k)
+        _ = json.Unmarshal(bpObjBytes, &bpObj)
+        fmt.Println(bpObj)
+        
+        bpInfoObj.BusinessPlan = bpObj;
+        
+        //Fetch the company details
+        companyObjBytes, _ := stub.GetState(bpObj.CompanyID)
+        _ = json.Unmarshal(companyObjBytes, &companyObj)
+        fmt.Println(companyObj)
+        
+        bpInfoObj.Company = companyObj;
+        
+        returnMessage = returnMessage + string(bpInfoObj) 
+        lenArr = lenArr - 1 
+        if (lenArr != 0) {
+            returnMessage = returnMessage + ","
+        } 
+	} 
+	returnMessage = returnMessage + "]}"
+	return []byte(returnMessage), nil
 }
 
 func (t *SimpleChaincode) updateBusinessPlan(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
@@ -686,6 +748,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.getCompanyList(stub, args)
 	} else if function == "getTradeRequestList" {
 		return t.getTradeRequestList(stub, args)
+    } else if function == "getBusinessPlanList" {
+		return t.getBusinessPlanList(stub, args)
     }
     
 	fmt.Println("Query did not find func: " + function)
