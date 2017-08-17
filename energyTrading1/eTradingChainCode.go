@@ -603,7 +603,7 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
     
     fmt.Println(tradeRequestIDArr)
     
-    return nil nil
+    return nil, nil
 }
 
 func (t *SimpleChaincode) updateContractStatus(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
