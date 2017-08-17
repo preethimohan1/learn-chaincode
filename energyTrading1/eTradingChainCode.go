@@ -62,8 +62,6 @@ type tradeRequest struct {
 	ShipperID              string  `json:"tr_shipper_id"`
 	ProducerID             string  `json:"tr_producer_id"`
 	EnergyMWH              float64 `json:"tr_energy_mwh"`
-	GasPrice               float64 `json:"tr_gas_price"`
-	EntryLocation          string  `json:"tr_entry_location"`
 	TradeRequestStartDate  string  `json:"tr_start_date"`
 	TradeRequestEndDate    string  `json:"tr_end_date"`
 	TradeRequestStatus     string  `json:"tr_status"`
@@ -546,15 +544,15 @@ func (t *SimpleChaincode) updateBusinessPlan(stub shim.ChaincodeStubInterface, a
 
 func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
     
-	var shipperID, tradeRequestIDString, producerID, entryLocation, tradeRequestStartDate, tradeRequestEndDate, tradeRequestStatus string
+	var shipperID, tradeRequestIDString, producerID, tradeRequestStartDate, tradeRequestEndDate, tradeRequestStatus string
 	var tradeRequestID, tradeRequestInvoiceID, tradeRequestIncidentID int
-	var energyMWH, gasPrice float64
+	var energyMWH float64
 	var tradeRequestObj tradeRequest
 
 	var tradeRequestIDArr TradeRequestIDList
 
-	if len(args) != 8 {
-		return nil, errors.New("Incorrect number of arguments. 8 expected")
+	if len(args) < 6 {
+		return nil, errors.New("Incorrect number of arguments. 6 expected")
 	}
     
     fmt.Println("Creating new trade request...")
@@ -564,17 +562,15 @@ func (t *SimpleChaincode) createTradeRequest(stub shim.ChaincodeStubInterface, a
 	shipperID = args[1]
 	producerID = args[2]
 	energyMWH, _ = strconv.ParseFloat(args[3], 64)
-	gasPrice, _ = strconv.ParseFloat(args[4], 64)
-	entryLocation = args[5]
-	tradeRequestStartDate = args[6]
-	tradeRequestEndDate = args[7]
+	tradeRequestStartDate = args[4]
+	tradeRequestEndDate = args[5]
 	tradeRequestStatus = "New"	
 	tradeRequestInvoiceID = 0
 	tradeRequestIncidentID = 0
 
 	tradeRequestObj = tradeRequest{TradeRequestID: tradeRequestID, ShipperID: shipperID, ProducerID: producerID,
-	EnergyMWH: energyMWH, GasPrice: gasPrice, EntryLocation: entryLocation, TradeRequestStartDate: tradeRequestStartDate,
-	TradeRequestEndDate: tradeRequestEndDate, TradeRequestStatus: tradeRequestStatus, TradeRequestInvoiceID: tradeRequestInvoiceID,
+	EnergyMWH: energyMWH, TradeRequestStartDate: tradeRequestStartDate, TradeRequestEndDate: tradeRequestEndDate, 
+	TradeRequestStatus: tradeRequestStatus, TradeRequestInvoiceID: tradeRequestInvoiceID,
 	TradeRequestIncidentID: tradeRequestIncidentID}
 
 	//Putting on RocksDB database.
