@@ -364,7 +364,7 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 	userName = args[0]
 	password = args[1]
 
-	userInfo, err := stub.GetState(userName)
+	userInfo, _ := stub.GetState(userName)
 	if userInfo == nil {
 		returnMessage = "Invalid Username"
         return false, errors.New(returnMessage), ""
