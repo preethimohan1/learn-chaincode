@@ -64,6 +64,7 @@ type contract struct {
 	InitiatorID        string  `json:"contract_initiator_id"`
 	ReceiverID         string  `json:"contract_receiver_id"`
 	EnergyMWH          float64 `json:"contract_energy_mwh"`
+    EntryLocation      string  `json:"contract_entry_location"`
 	ContractStartDate  string  `json:"contract_start_date"`
 	ContractEndDate    string  `json:"contract_end_date"`
 	ContractStatus     string  `json:"contract_status"`
@@ -312,7 +313,7 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
     
 	validUser, err1, compID := t.verifyUser(stub, args)
 	if err1 != nil {
-		return nil, err1
+        fmt.Println(err1)
     }
     fmt.Println(compID)
     
@@ -365,20 +366,18 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 
 	userInfo, err := stub.GetState(userName)
 	if userInfo == nil {
-        fmt.Println("Invalid Username")
 		returnMessage = "Invalid Username"
         return false, errors.New(returnMessage), ""
 	}
 
 	err1 := json.Unmarshal(userInfo, &loginObj)
 	if err1 != nil {
-		return false, err, ""
+		return false, err1, ""
 	}
     fmt.Println(loginObj)
 	if password == loginObj.Password {
 		return true, nil, loginObj.CompanyID
 	} else {        
-        fmt.Println("Invalid Password")
 		returnMessage = "Invalid Password"
 		return false, errors.New(returnMessage), ""
 	}
