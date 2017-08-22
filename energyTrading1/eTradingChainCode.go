@@ -716,7 +716,7 @@ func (t *SimpleChaincode) getGasRequestList(stub shim.ChaincodeStubInterface, ar
     return t.getContractList(stub, gasRequestKey, args)
 }
 
-func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] string ) []byte, error {
+func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
     fmt.Println("Adding new IOT Data: "+ args[0])
     
 	
