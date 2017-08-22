@@ -716,6 +716,13 @@ func (t *SimpleChaincode) getGasRequestList(stub shim.ChaincodeStubInterface, ar
     return t.getContractList(stub, gasRequestKey, args)
 }
 
+func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] string ) []byte, error {
+    fmt.Println("Adding new IOT Data: "+ args[0])
+    
+	
+    return nil, nil
+}
+
 func testEqualSlice (a []byte, b []byte) bool {
 
 	if a == nil && b == nil { 
@@ -760,6 +767,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.updateBusinessPlan(stub, args)
 	} else if function == "topupBankBalance" {
 		return t.topupBankBalance(stub, args)
+	} else if function == "addIOTData" {
+		return t.addIOTData(stub, args)
 	}
  
 	fmt.Println("Invoke did not find function:" + function)
