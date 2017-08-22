@@ -724,7 +724,8 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
 }
                                                                                          
 func (t *SimpleChaincode) readAssetSchemas (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
-    fmt.Println("readAssetSchemas: Adding new IOT Data Obj: "+ args)
+    fmt.Println("readAssetSchemas: Adding new IOT Data Obj: ")
+    fmt.Println(args)
     fmt.Println("readAssetSchemas: Adding new IOT Data: "+ args[0])
 	
     return nil, nil
