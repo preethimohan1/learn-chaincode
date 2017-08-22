@@ -722,6 +722,14 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
 	
     return nil, nil
 }
+                                                                                         
+func (t *SimpleChaincode) readAssetSchemas (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
+    fmt.Println("readAssetSchemas: Adding new IOT Data Obj: "+ args)
+    fmt.Println("readAssetSchemas: Adding new IOT Data: "+ args[0]])
+	
+    return nil, nil
+}
+                                                                                          
 
 func testEqualSlice (a []byte, b []byte) bool {
 
@@ -769,7 +777,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.topupBankBalance(stub, args)
 	} else if function == "addIOTData" {
 		return t.addIOTData(stub, args)
-	}
+	}  else if function == "readAssetSchemas" {
+		return t.readAssetSchemas(stub, args)
+    }
  
 	fmt.Println("Invoke did not find function:" + function)
 
