@@ -756,7 +756,7 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     fmt.Println(flowMeter)
     
     //Get the flow meter data list for this company
-    var arrKey = flowMeter.company_id + iotKeyAffix
+    var arrKey = flowMeter.CompanyID + iotKeyAffix
     flowMeterObjBytes, _ := stub.GetState(arrKey)   
 	
     if flowMeterObjBytes != nil {
