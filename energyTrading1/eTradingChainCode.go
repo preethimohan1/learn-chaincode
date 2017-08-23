@@ -17,6 +17,7 @@ var transportRequestKey = "TRANSPORTREQUESTIDLIST"
 var gasRequestKey = "GASREQUESTIDLIST"
 var planKey = "PLANIDLIST"
 var planIDPrefix = "PLAN_"
+var iotKeyAffix = "_IOTDATA"
 
 type SimpleChaincode struct {
 
@@ -76,6 +77,32 @@ type contractInfo struct {
     Contract     contract       `json:"contract"`
     InitiatorCompany company    `json:"initiator_company"`
     ReceiverCompany  company    `json:"receiver_company"`
+}
+
+type flowMeterData struct {
+	DeviceID           string  `json:"device_id"`
+	DeviceLocation     string  `json:"device_location"`
+	CompanyID          string  `json:"company_id"`
+	PressureKPA        int     `json:"pressure_kpa"`
+    TemperatureC       int     `json:"temperature_c"`
+	SpecificGravity    float64 `json:"specific_gravity"`
+	EnergyMWH          int     `json:"energy_mwh"`
+	TimestampMS        int     `json:"timestamp_ms"`
+}
+
+type invoice struct {
+	InvoiceID          int     `json:"invoice_id"`
+	InvoiceDate        string  `json:"invoice_date"`
+	PaymentStatus      string  `json:"payment_status"`
+	PaymentDate        string  `json:"payment_date"`
+    ContractID         int     `json:"contract_id"`
+}
+
+type incident struct {
+	IncidentID          int     `json:"incident_id"`
+	IncidentDate        string  `json:"incident_date"`
+	IncidentDescription string  `json:"incident_desc"`
+    ContractID          int     `json:"contract_id"`
 }
 
 type CompanyIDList []string
@@ -717,18 +744,48 @@ func (t *SimpleChaincode) getGasRequestList(stub shim.ChaincodeStubInterface, ar
 }
 
 func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
+    //args[0] = {"device_id": "GasFlowMeter_1", "device_location": "Location 1", "company_id": "TRANSPORTER1", "pressure_kpa": 100, "temperature_c": 20, "specific_gravity": 0.65, "energy_mwh": 100,"timestamp_ms":1503416349302}
+    
     fmt.Println("Adding new IOT Data: "+ args[0])
     
+    var flowMeter flowMeterData
+    var flowMeterList []flowMeterData
+    
+    //Convert json string to json object
+    _ = json.Unmarshal([]byte(args[0]), &flowMeter)
+    fmt.Println(flowMeter)
+    
+    //Get the flow meter data list for this company
+    var arrKey = flowMeter.company_id + iotKeyAffix
+    flowMeterObjBytes, _ := stub.GetState(arrKey)   
 	
+    if flowMeterObjBytes != nil {
+		 _ = json.Unmarshal(flowMeterObjBytes, &flowMeterList)
+	}   
+    
+    //Add flow meter data to the list and save it
+    flowMeterList = append(flowMeterList, flowMeter)	
+    flowMeterListObjBytes, _ = json.Marshal(&flowMeterList)
+    _ = stub.PutState(arrKey, flowMeterListObjBytes)
+    
+    fmt.Println(flowMeterList)
+    
     return nil, nil
 }
                                                                                          
-func (t *SimpleChaincode) readAssetSchemas (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
-    fmt.Println("readAssetSchemas: Adding new IOT Data Obj: ")
-    fmt.Println(args)
-    fmt.Println("readAssetSchemas: Adding new IOT Data: "+ args[0])
-	
-    return nil, nil
+func (t *SimpleChaincode) getIOTData (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
+    fmt.Println("getIOTData: Adding new IOT Data: "+ args[0])
+	var flowMeterList []flowMeterData
+    var companyID = args[0]
+    
+     //Get the flow meter data list for this company
+    var arrKey = companyID + iotKeyAffix
+    flowMeterObjBytes, _ := stub.GetState(arrKey) 
+    _ = json.Unmarshal(flowMeterObjBytes, &flowMeterList)
+    
+    fmt.Println(flowMeterList)
+    
+    return flowMeterObjBytes, nil
 }
                                                                                           
 
@@ -778,9 +835,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.topupBankBalance(stub, args)
 	} else if function == "addIOTData" {
 		return t.addIOTData(stub, args)
-	}  else if function == "readAssetSchemas" {
-		return t.readAssetSchemas(stub, args)
-    }
+	}
  
 	fmt.Println("Invoke did not find function:" + function)
 
@@ -806,6 +861,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.getGasRequestList(stub, args)
     } else if function == "getBusinessPlanList" {
 		return t.getBusinessPlanList(stub, args)
+    } else if function == "getIOTData" {
+		return t.getIOTData(stub, args)
     }
     
 	fmt.Println("Query did not find func: " + function)
