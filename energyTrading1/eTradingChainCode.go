@@ -765,8 +765,8 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     
     //Add flow meter data to the list and save it
     flowMeterList = append(flowMeterList, flowMeter)	
-    flowMeterListObjBytes, _ = json.Marshal(&flowMeterList)
-    _ = stub.PutState(arrKey, flowMeterListObjBytes)
+    flowMeterObjBytes, _ = json.Marshal(&flowMeterList)
+    _ = stub.PutState(arrKey, flowMeterObjBytes)
     
     fmt.Println(flowMeterList)
     
