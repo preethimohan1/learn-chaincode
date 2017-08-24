@@ -775,17 +775,21 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
                                                                                          
 func (t *SimpleChaincode) getIOTData (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
     fmt.Println("getIOTData: Adding new IOT Data: "+ args[0])
+    var companyID, returnMessage string
 	var flowMeterList []flowMeterData
-    var companyID = args[0]
+    
+    companyID = args[0]
     
      //Get the flow meter data list for this company
     var arrKey = companyID + iotKeyAffix
     flowMeterObjBytes, _ := stub.GetState(arrKey) 
     _ = json.Unmarshal(flowMeterObjBytes, &flowMeterList)
     
+    returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : " + string(flowMeterObjBytes) + "}"
+    
     fmt.Println(flowMeterList)
     
-    return flowMeterObjBytes, nil
+    return []byte(returnMessage), nil
 }
                                                                                           
 
