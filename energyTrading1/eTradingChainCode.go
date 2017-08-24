@@ -257,11 +257,12 @@ func (t *SimpleChaincode) getCompanyList(stub shim.ChaincodeStubInterface, args 
         
         if(strings.ToLower(companyType) == "all" || strings.ToLower(companyObj.CompanyType) == strings.ToLower(companyType)) {        
             returnMessage = returnMessage + string(compObjBytes) 
-            lenArr = lenArr - 1 
-            if (lenArr != 0) {
-                returnMessage = returnMessage + ","
-            } 
         }
+        
+        lenArr = lenArr - 1 
+        if (lenArr != 0) {
+            returnMessage = returnMessage + ","
+        } 
 	} 
 	returnMessage = returnMessage + "]}"
 	return []byte(returnMessage), nil
@@ -720,12 +721,12 @@ func (t *SimpleChaincode) getContractList(stub shim.ChaincodeStubInterface, idAr
             }
             
             returnMessage = returnMessage + string(contractFullObjBytes)
-            
-            lenMap = lenMap - 1
-            if (lenMap!= 0) {
-                returnMessage = returnMessage + ","
-            }
-        }        
+        }
+        
+        lenMap = lenMap - 1
+        if (lenMap!= 0) {
+            returnMessage = returnMessage + ","
+        }                
 	}
 	returnMessage = returnMessage + "]}"
 	return []byte(returnMessage), nil
