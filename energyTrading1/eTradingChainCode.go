@@ -772,11 +772,11 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     
     fmt.Println(flowMeterList)
     
-    //Check for violations
+    //Check for invoice or incident to be created
     var tArgs []string
     tArgs[0] = flowMeter.CompanyID
     //Get all the contracts with this transporter/buyer
-    trListObjBytes, _ := t.getTransportRequestList(stub, tArgs[0])
+    trListObjBytes, _ := t.getTransportRequestList(stub, tArgs)
     _ = json.Unmarshal(trListObjBytes, &contractIDList)
     
     for _, k := range contractIDList {
@@ -786,18 +786,18 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
         fmt.Println(contractObj)
         
         if(flowMeter.EnergyMWH < contractObj.EnergyMWH){
-            invoiceArgs[0] = strconv.ParseInt(flowMeter.TimestampMS) //Use timestamp as unique ID
+            invoiceArgs[0] = strconv.FormatInt(flowMeter.TimestampMS, 16) //Use timestamp as unique ID
             invoiceArgs[1] = invoiceArgs[0] // Timestamp in string
-            invoiceArgs[2] = contractObj.ContractID
+            invoiceArgs[2] = strconv.FormatInt(contractObj.ContractID, 16)
             
             //Create invoice
             t.createInvoice(stub, invoiceArgs)
         } else {
-            incidentArgs[0] = strconv.ParseInt(flowMeter.TimestampMS) //Use timestamp as unique ID
+            incidentArgs[0] = strconv.FormatInt(flowMeter.TimestampMS, 16) //Use timestamp as unique ID
             incidentArgs[1] = incidentArgs[0] // Timestamp in string
-            incidentArgs[2] = contractObj.EnergyMWH
-            incidentArgs[3] = flowMeter.EnergyMWH
-            incidentArgs[4] = contractObj.ContractID
+            incidentArgs[2] = strconv.FormatFloat(contractObj.EnergyMWH, 'E', -1, 64)
+            incidentArgs[3] = strconv.FormatFloat(flowMeter.EnergyMWH, 'E', -1, 64)
+            incidentArgs[4] = strconv.FormatInt(contractObj.ContractID, 16)
             
             //Create incident
             t.createIncident(stub, invoiceArgs)
@@ -863,8 +863,8 @@ func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args
     incidentIDStr = args[0]
     incidentID, _ = strconv.Atoi(args[0])
     incidentDate = args[1]
-    expectedEnergyMWH = args[2]
-    actualEnergyMWH = args[3]
+    expectedEnergyMWH = strconv.parseFloat(args[2])
+    actualEnergyMWH = strconv.parseFloat(args[3])
     incidentStatus = "New"
     contractIDStr = args[4]
     contractID, _ = strconv.Atoi(args[4])
