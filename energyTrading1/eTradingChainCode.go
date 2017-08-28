@@ -786,18 +786,18 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
         fmt.Println(contractObj)
         
         if(flowMeter.EnergyMWH < contractObj.EnergyMWH){
-            invoiceArgs[0] = String(flowMeter.TimestampMS) //Use timestamp as unique ID
+            invoiceArgs[0] = strconv.Itoa(flowMeter.TimestampMS) //Use timestamp as unique ID
             invoiceArgs[1] = invoiceArgs[0] // Timestamp in string
-            invoiceArgs[2] = String(contractObj.ContractID)
+            invoiceArgs[2] = strconv.Itoa(contractObj.ContractID)
             
             //Create invoice
             t.createInvoice(stub, invoiceArgs)
         } else {
-            incidentArgs[0] = String(flowMeter.TimestampMS) //Use timestamp as unique ID
+            incidentArgs[0] = strconv.Itoa(flowMeter.TimestampMS) //Use timestamp as unique ID
             incidentArgs[1] = incidentArgs[0] // Timestamp in string
             incidentArgs[2] = strconv.FormatFloat(contractObj.EnergyMWH, 'E', -1, 64)
             incidentArgs[3] = strconv.FormatFloat(flowMeter.EnergyMWH, 'E', -1, 64)
-            incidentArgs[4] = String(contractObj.ContractID)
+            incidentArgs[4] = strconv.Itoa(contractObj.ContractID)
             
             //Create incident
             t.createIncident(stub, invoiceArgs)
