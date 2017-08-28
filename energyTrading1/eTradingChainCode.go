@@ -845,6 +845,8 @@ func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, args[
     invoiceIDArr = append(invoiceIDArr, invoiceIDStr)	
     invoiceIDListObjBytes, _ = json.Marshal(&invoiceIDArr)
     _ = stub.PutState(arrKey, invoiceIDListObjBytes)
+    
+    return nil, nil
 }
 
 func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
@@ -863,8 +865,8 @@ func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args
     incidentIDStr = args[0]
     incidentID, _ = strconv.Atoi(args[0])
     incidentDate = args[1]
-    expectedEnergyMWH = strconv.parseFloat(args[2], 64)
-    actualEnergyMWH = strconv.parseFloat(args[3], 64)
+    expectedEnergyMWH, _ = strconv.parseFloat(args[2], 64)
+    actualEnergyMWH, _ = strconv.parseFloat(args[3], 64)
     incidentStatus = "New"
     contractIDStr = args[4]
     contractID, _ = strconv.Atoi(args[4])
@@ -875,7 +877,7 @@ func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args
 	if err1 != nil {
 		return nil, err1
 	}
-	_ = stub.PutState(incidentID, incidentObjBytes)
+	_ = stub.PutState(incidentIDStr, incidentObjBytes)
     
     //Add incident id into contract's incident list
     var arrKey = contractIDStr+incidentAffix
@@ -889,6 +891,8 @@ func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args
     incidentIDArr = append(incidentIDArr, incidentIDStr)	
     incidentIDListObjBytes, _ = json.Marshal(&incidentIDArr)
     _ = stub.PutState(arrKey, incidentIDListObjBytes)
+    
+    return nil, nil
 }
                                                                                          
 func (t *SimpleChaincode) getIOTData (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
