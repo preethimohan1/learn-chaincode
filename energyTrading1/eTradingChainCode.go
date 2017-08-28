@@ -865,8 +865,8 @@ func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args
     incidentIDStr = args[0]
     incidentID, _ = strconv.Atoi(args[0])
     incidentDate = args[1]
-    expectedEnergyMWH, _ = strconv.parseFloat(args[2], 64)
-    actualEnergyMWH, _ = strconv.parseFloat(args[3], 64)
+    expectedEnergyMWH, _ = strconv.ParseFloat(args[2], 64)
+    actualEnergyMWH, _ = strconv.ParseFloat(args[3], 64)
     incidentStatus = "New"
     contractIDStr = args[4]
     contractID, _ = strconv.Atoi(args[4])
