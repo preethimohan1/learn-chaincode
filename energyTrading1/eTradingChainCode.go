@@ -808,7 +808,7 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
 
 func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
     var invoiceID, contractID int 
-	var contractIDStr, invoiceIDStr, invoiceDate, paymentStatus, paymentDate string 
+	var contractIDStr, invoiceIDStr, invoiceDate, paymentStatus string 
     var invoiceObj invoice
     var invoiceIDArr []string
     
