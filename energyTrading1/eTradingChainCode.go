@@ -11,13 +11,15 @@ import (
 )
 
 var companyKey = "COMPANYIDLIST"
-var userIDAffix = "USERLIST"
+var userIDAffix = "USERLIST"    //<CompanyType>USERLIST
 var tradeRequestKey = "TRADEREQUESTIDLIST"
 var transportRequestKey = "TRANSPORTREQUESTIDLIST"
 var gasRequestKey = "GASREQUESTIDLIST"
 var planKey = "PLANIDLIST"
-var planIDPrefix = "PLAN_"
-var iotKeyAffix = "_IOTDATA"
+var planIDPrefix = "PLAN_"      // PLAN_<CompanyID>
+var iotKeyAffix = "_IOTDATA"    //<CompanyID>_IOTDATA
+var invoiceAffix = "_INVOICELIST"   //<ContractID>_INVOICELIST
+var incidentAffix = "_INCIDENTLIST" //<ContractID>_INCIDENTLIST
 
 type SimpleChaincode struct {
 
@@ -69,8 +71,6 @@ type contract struct {
 	ContractStartDate  string  `json:"contract_start_date"`
 	ContractEndDate    string  `json:"contract_end_date"`
 	ContractStatus     string  `json:"contract_status"`
-	InvoiceID          int     `json:"contract_invoice_id"`
-	IncidentID         int     `json:"contract_incident_id"`
 }
 
 type contractInfo struct {
@@ -86,7 +86,7 @@ type flowMeterData struct {
 	PressureKPA        int     `json:"pressure_kpa"`
     TemperatureC       int     `json:"temperature_c"`
 	SpecificGravity    float64 `json:"specific_gravity"`
-	EnergyMWH          int     `json:"energy_mwh"`
+	EnergyMWH          float64 `json:"energy_mwh"`
 	TimestampMS        int     `json:"timestamp_ms"`
 }
 
@@ -101,7 +101,9 @@ type invoice struct {
 type incident struct {
 	IncidentID          int     `json:"incident_id"`
 	IncidentDate        string  `json:"incident_date"`
-	IncidentDescription string  `json:"incident_desc"`
+    IncidentStatus      string  `json:"incident_status"`
+	ExpectedEnergyMWH   float64 `json:"expected_energy_mwh"`
+    ActualEnergyMWH     float64 `json:"actual_energy_mwh"`
     ContractID          int     `json:"contract_id"`
 }
 
@@ -573,7 +575,7 @@ func (t *SimpleChaincode) updateBusinessPlan(stub shim.ChaincodeStubInterface, a
 func (t *SimpleChaincode) createContract(stub shim.ChaincodeStubInterface, idArrKey string, args[] string) ([]byte, error) {
     
 	var initiatorID, contractIDString, receiverID, contractStartDate, contractEndDate, contractStatus string
-	var contractID, contractInvoiceID, contractIncidentID int
+	var contractID int
 	var energyMWH float64
 	var contractObj contract
     var contractIDArr []string
@@ -592,13 +594,10 @@ func (t *SimpleChaincode) createContract(stub shim.ChaincodeStubInterface, idArr
 	contractStartDate = args[4]
 	contractEndDate = args[5]
 	contractStatus = "New"	
-	contractInvoiceID = 0
-	contractIncidentID = 0
 
 	contractObj = contract{ContractID: contractID, InitiatorID: initiatorID, ReceiverID: receiverID,
 	EnergyMWH: energyMWH, ContractStartDate: contractStartDate, ContractEndDate: contractEndDate, 
-	ContractStatus: contractStatus, InvoiceID: contractInvoiceID,
-	IncidentID: contractIncidentID}
+	ContractStatus: contractStatus }
 
 	//Putting on RocksDB database.
 	contractObjBytes, err1 := json.Marshal(contractObj)
@@ -751,7 +750,9 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     
     var flowMeter flowMeterData
     var flowMeterList []flowMeterData
-    
+    var contractIDList, invoiceArgs, incidentArgs []string
+    var contractObj contract
+          
     //Convert json string to json object
     _ = json.Unmarshal([]byte(args[0]), &flowMeter)
     fmt.Println(flowMeter)
@@ -771,7 +772,123 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     
     fmt.Println(flowMeterList)
     
+    //Check for violations
+    var tArgs []string
+    tArgs[0] = flowMeter.CompanyID
+    //Get all the contracts with this transporter/buyer
+    trListObjBytes, _ := t.getTransportRequestList(stub, tArgs[0])
+    _ = json.Unmarshal(trListObjBytes, &contractIDList)
+    
+    for _, k := range contractIDList {
+        
+		contractObjBytes, _ := stub.GetState(k)
+        _ = json.Unmarshal(contractObjBytes, &contractObj)
+        fmt.Println(contractObj)
+        
+        if(flowMeter.EnergyMWH < contractObj.EnergyMWH){
+            invoiceArgs[0] = strconv.ParseInt(flowMeter.TimestampMS) //Use timestamp as unique ID
+            invoiceArgs[1] = invoiceArgs[0] // Timestamp in string
+            invoiceArgs[2] = contractObj.ContractID
+            
+            //Create invoice
+            t.createInvoice(stub, invoiceArgs)
+        } else {
+            incidentArgs[0] = strconv.ParseInt(flowMeter.TimestampMS) //Use timestamp as unique ID
+            incidentArgs[1] = incidentArgs[0] // Timestamp in string
+            incidentArgs[2] = contractObj.EnergyMWH
+            incidentArgs[3] = flowMeter.EnergyMWH
+            incidentArgs[4] = contractObj.ContractID
+            
+            //Create incident
+            t.createIncident(stub, invoiceArgs)
+        }
+    }
     return nil, nil
+}
+
+func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
+    var invoiceID, contractID int 
+	var invoiceIDStr, invoiceDate, paymentStatus, paymentDate string 
+    var invoiceObj invoice
+    var invoiceIDArr []string
+    
+    fmt.Println("Creating new invoice...")
+    
+    if len(args) < 3 {
+		return nil, errors.New("Incorrect number of arguments. 3 expected")
+	}
+    
+    invoiceIDStr = args[0]
+    invoiceID, _ = strconv.Atoi(args[0])
+    invoiceDate = args[1]
+    paymentStatus = "New"
+    contractIDStr = args[2]
+    contractID, _ = strconv.Atoi(args[2])
+    
+    //Create invoice and store in database
+    invoiceObj = invoice {InvoiceID: invoiceID, InvoiceDate: invoiceDate, PaymentStatus: paymentStatus, ContractID: contractID}
+    invoiceObjBytes, err1 := json.Marshal(invoiceObj)
+	if err1 != nil {
+		return nil, err1
+	}
+	_ = stub.PutState(invoiceID, invoiceObjBytes)
+    
+    //Add invoice id into contract's invoice list
+    var arrKey = contractIDStr+invoiceAffix
+    invoiceIDListObjBytes, err2 := stub.GetState(arrKey)
+	if err2 != nil {
+		return nil, err2
+	}
+	if invoiceIDListObjBytes != nil {
+		_ = json.Unmarshal(invoiceIDListObjBytes, &invoiceIDArr)
+	}    
+    invoiceIDArr = append(invoiceIDArr, invoiceIDStr)	
+    invoiceIDListObjBytes, _ = json.Marshal(&invoiceIDArr)
+    _ = stub.PutState(arrKey, invoiceIDListObjBytes)
+}
+
+func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
+    var incidentID, contractID int 
+	var incidentIDStr, incidentDate, incidentStatus string 
+    var incidentObj incident
+    var incidentIDArr []string
+    var expectedEnergyMWH, actualEnergyMWH float64
+    
+    fmt.Println("Creating new incident...")
+    
+    if len(args) < 5 {
+		return nil, errors.New("Incorrect number of arguments. 5 expected")
+	}
+    
+    incidentIDStr = args[0]
+    incidentID, _ = strconv.Atoi(args[0])
+    incidentDate = args[1]
+    expectedEnergyMWH = args[2]
+    actualEnergyMWH = args[3]
+    incidentStatus = "New"
+    contractIDStr = args[4]
+    contractID, _ = strconv.Atoi(args[4])
+    
+    //Create incident and store in database
+    incidentObj = incident {IncidentID: incidentID, IncidentDate: incidentDate, IncidentStatus: incidentStatus, ExpectedEnergyMWH: expectedEnergyMWH, ActualEnergyMWH: actualEnergyMWH, ContractID: contractID}
+    incidentObjBytes, err1 := json.Marshal(incidentObj)
+	if err1 != nil {
+		return nil, err1
+	}
+	_ = stub.PutState(incidentID, incidentObjBytes)
+    
+    //Add incident id into contract's incident list
+    var arrKey = contractIDStr+incidentAffix
+    incidentIDListObjBytes, err2 := stub.GetState(arrKey)
+	if err2 != nil {
+		return nil, err2
+	}
+	if incidentIDListObjBytes != nil {
+		_ = json.Unmarshal(incidentIDListObjBytes, &incidentIDArr)
+	}    
+    incidentIDArr = append(incidentIDArr, incidentIDStr)	
+    incidentIDListObjBytes, _ = json.Marshal(&incidentIDArr)
+    _ = stub.PutState(arrKey, incidentIDListObjBytes)
 }
                                                                                          
 func (t *SimpleChaincode) getIOTData (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
