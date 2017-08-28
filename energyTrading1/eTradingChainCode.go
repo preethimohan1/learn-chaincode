@@ -786,18 +786,18 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
         fmt.Println(contractObj)
         
         if(flowMeter.EnergyMWH < contractObj.EnergyMWH){
-            invoiceArgs[0] = strconv.FormatInt(flowMeter.TimestampMS, 16) //Use timestamp as unique ID
+            invoiceArgs[0] = String(flowMeter.TimestampMS) //Use timestamp as unique ID
             invoiceArgs[1] = invoiceArgs[0] // Timestamp in string
-            invoiceArgs[2] = strconv.FormatInt(contractObj.ContractID, 16)
+            invoiceArgs[2] = String(contractObj.ContractID)
             
             //Create invoice
             t.createInvoice(stub, invoiceArgs)
         } else {
-            incidentArgs[0] = strconv.FormatInt(flowMeter.TimestampMS, 16) //Use timestamp as unique ID
+            incidentArgs[0] = String(flowMeter.TimestampMS) //Use timestamp as unique ID
             incidentArgs[1] = incidentArgs[0] // Timestamp in string
             incidentArgs[2] = strconv.FormatFloat(contractObj.EnergyMWH, 'E', -1, 64)
             incidentArgs[3] = strconv.FormatFloat(flowMeter.EnergyMWH, 'E', -1, 64)
-            incidentArgs[4] = strconv.FormatInt(contractObj.ContractID, 16)
+            incidentArgs[4] = String(contractObj.ContractID)
             
             //Create incident
             t.createIncident(stub, invoiceArgs)
@@ -808,7 +808,7 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
 
 func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
     var invoiceID, contractID int 
-	var invoiceIDStr, invoiceDate, paymentStatus, paymentDate string 
+	var contractIDStr, invoiceIDStr, invoiceDate, paymentStatus, paymentDate string 
     var invoiceObj invoice
     var invoiceIDArr []string
     
@@ -831,7 +831,7 @@ func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, args[
 	if err1 != nil {
 		return nil, err1
 	}
-	_ = stub.PutState(invoiceID, invoiceObjBytes)
+	_ = stub.PutState(invoiceIDStr, invoiceObjBytes)
     
     //Add invoice id into contract's invoice list
     var arrKey = contractIDStr+invoiceAffix
@@ -849,7 +849,7 @@ func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, args[
 
 func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
     var incidentID, contractID int 
-	var incidentIDStr, incidentDate, incidentStatus string 
+	var contractIDStr, incidentIDStr, incidentDate, incidentStatus string 
     var incidentObj incident
     var incidentIDArr []string
     var expectedEnergyMWH, actualEnergyMWH float64
@@ -863,8 +863,8 @@ func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args
     incidentIDStr = args[0]
     incidentID, _ = strconv.Atoi(args[0])
     incidentDate = args[1]
-    expectedEnergyMWH = strconv.parseFloat(args[2])
-    actualEnergyMWH = strconv.parseFloat(args[3])
+    expectedEnergyMWH = strconv.parseFloat(args[2], 64)
+    actualEnergyMWH = strconv.parseFloat(args[3], 64)
     incidentStatus = "New"
     contractIDStr = args[4]
     contractID, _ = strconv.Atoi(args[4])
