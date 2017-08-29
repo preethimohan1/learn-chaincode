@@ -646,10 +646,13 @@ func (t *SimpleChaincode) updateContractStatus(stub shim.ChaincodeStubInterface,
 		return nil, errors.New("Incorrect number of arguments. 2 expected (ContractID and ContractStatus)")
 	}
 	
+    fmt.Println("Updating contract ID " + args[0] + " to status " + args[1])
+    
 	contractIDString = args[0]
 	contractObjBytes, _ := stub.GetState(contractIDString)
 	err1 := json.Unmarshal(contractObjBytes, &contractObj)
 	if err1 != nil {
+        fmt.Println(err1)
 		return nil, err1
 	}
 	
@@ -659,10 +662,12 @@ func (t *SimpleChaincode) updateContractStatus(stub shim.ChaincodeStubInterface,
 	//Save the updated trade request
 	contractBytes, err2 := json.Marshal(&contractObj)
 	if err2 != nil {
+        fmt.Println(err2)
 		return nil, err2
 	}
 	err3 := stub.PutState(contractIDString, contractBytes)
 	if err3 != nil {
+        fmt.Println(err3)
 		return nil, err3
 	}
 	
@@ -760,7 +765,9 @@ func (t *SimpleChaincode) getContractObjList(stub shim.ChaincodeStubInterface, i
         fmt.Println(contractObj)
         
         if(contractObj.InitiatorID == companyID || contractObj.ReceiverID == companyID) {
-            contractObjList = append(contractObjList, contractObj)
+            if(contractObj.ContractStatus == "Accepted") {
+                contractObjList = append(contractObjList, contractObj)
+            }
         }            
 	}
 	
@@ -805,7 +812,7 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
         
         fmt.Println(contractObj)
         
-        if(flowMeter.EnergyMWH < contractObj.EnergyMWH){
+        if(flowMeter.EnergyMWH <= contractObj.EnergyMWH){
             invoiceArgs[0] = strconv.Itoa(flowMeter.TimestampMS) //Use timestamp as unique ID
             invoiceArgs[1] = invoiceArgs[0] // Timestamp in string
             invoiceArgs[2] = strconv.Itoa(contractObj.ContractID)
@@ -916,7 +923,7 @@ func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args
 }
                                                                                          
 func (t *SimpleChaincode) getIOTData (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
-    fmt.Println("getIOTData: Adding new IOT Data: "+ args[0])
+    fmt.Println("getIOTData for company ID: "+ args[0])
     var companyID, returnMessage string
 	var flowMeterList []flowMeterData
     
