@@ -802,7 +802,7 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     //Check for invoice or incident to be created
     
     //Get all the contracts with this transporter/buyer
-    contractObjList := t.getContractObjList(stub, flowMeter.CompanyID)
+    contractObjList = t.getContractObjList(stub, flowMeter.CompanyID)
     
     for _, contractObj := range contractObjList {
         
