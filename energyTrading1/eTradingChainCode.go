@@ -816,11 +816,6 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
             //Create invoice
             t.createInvoice(stub, flowMeter.TimestampMS, contractObj.ContractID)
         } else {
-            incidentArgs:= [4]string {strconv.Itoa(flowMeter.TimestampMS), 
-                                        strconv.FormatFloat(contractObj.EnergyMWH, 'E', -1, 64),
-                                        strconv.FormatFloat(flowMeter.EnergyMWH, 'E', -1, 64),
-                                        strconv.Itoa(contractObj.ContractID)}
-            
             //Create incident
             t.createIncident(stub, flowMeter.TimestampMS, contractObj.EnergyMWH, flowMeter.EnergyMWH, contractObj.ContractID)
         }
