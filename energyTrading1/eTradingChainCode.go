@@ -744,7 +744,6 @@ func (t *SimpleChaincode) getGasRequestList(stub shim.ChaincodeStubInterface, ar
 }
 
 func (t *SimpleChaincode) getContractObjList(stub shim.ChaincodeStubInterface, idArrKey string, companyID string) ([]contract) {
-	var lenMap int	
     var contractIDList []string
     var contractObj contract
     var contractObjList []contract
@@ -754,7 +753,6 @@ func (t *SimpleChaincode) getContractObjList(stub shim.ChaincodeStubInterface, i
 	contractListObjBytes, _ := stub.GetState(idArrKey)
 	_ = json.Unmarshal(contractListObjBytes, &contractIDList)
     
-	lenMap = len(contractIDList)
 	for _, k := range contractIDList {
         
 		contractObjBytes, _ := stub.GetState(k)
