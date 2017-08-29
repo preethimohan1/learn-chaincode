@@ -775,7 +775,6 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     var flowMeter flowMeterData
     var flowMeterList []flowMeterData
     var invoiceArgs, incidentArgs []string
-    var contractObj contract
     var contractObjList []contract
           
     //Convert json string to json object
