@@ -831,7 +831,7 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     return nil, nil
 }
 
-func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
+func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, args [2]string ) ([]byte, error) {
     var invoiceID, contractID int 
 	var contractIDStr, invoiceIDStr, invoiceDate, paymentStatus string 
     var invoiceObj invoice
@@ -874,7 +874,7 @@ func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, args[
     return nil, nil
 }
 
-func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
+func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args [4]string ) ([]byte, error) {
     var incidentID, contractID int 
 	var contractIDStr, incidentIDStr, incidentDate, incidentStatus string 
     var incidentObj incident
