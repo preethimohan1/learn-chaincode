@@ -781,8 +781,6 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     
     var flowMeter flowMeterData
     var flowMeterList []flowMeterData
-    var invoiceArgs [3]string 
-    var incidentArgs [5]string
     var contractObjList []contract
           
     //Convert json string to json object
@@ -815,21 +813,19 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
         // If the energy from flow meter is higher or equal to the energy set in the contract, then create an invoice
         // Else create an incident
         if(flowMeter.EnergyMWH >= contractObj.EnergyMWH){
-            invoiceArgs[0] = strconv.Itoa(flowMeter.TimestampMS) //Use timestamp as unique ID
-            invoiceArgs[1] = invoiceArgs[0] // Timestamp in string
-            invoiceArgs[2] = strconv.Itoa(contractObj.ContractID)
+            //Use timestamp as unique ID
+            invoiceArgs := [2]string{ strconv.Itoa(flowMeter.TimestampMS), strconv.Itoa(contractObj.ContractID)}
             
             //Create invoice
             t.createInvoice(stub, invoiceArgs)
         } else {
-            incidentArgs[0] = strconv.Itoa(flowMeter.TimestampMS) //Use timestamp as unique ID
-            incidentArgs[1] = incidentArgs[0] // Timestamp in string
-            incidentArgs[2] = strconv.FormatFloat(contractObj.EnergyMWH, 'E', -1, 64)
-            incidentArgs[3] = strconv.FormatFloat(flowMeter.EnergyMWH, 'E', -1, 64)
-            incidentArgs[4] = strconv.Itoa(contractObj.ContractID)
+            incidentArgs:= [4]string {strconv.Itoa(flowMeter.TimestampMS), 
+                                        strconv.FormatFloat(contractObj.EnergyMWH, 'E', -1, 64),
+                                        strconv.FormatFloat(flowMeter.EnergyMWH, 'E', -1, 64),
+                                        strconv.Itoa(contractObj.ContractID)}
             
             //Create incident
-            t.createIncident(stub, invoiceArgs)
+            t.createIncident(stub, incidentArgs)
         }
     }
     return nil, nil
@@ -843,16 +839,16 @@ func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, args[
     
     fmt.Println("Creating new invoice...")
     
-    if len(args) < 3 {
-		return nil, errors.New("Incorrect number of arguments. 3 expected")
+    if len(args) < 2 {
+		return nil, errors.New("Incorrect number of arguments. 2 expected")
 	}
     
     invoiceIDStr = args[0]
     invoiceID, _ = strconv.Atoi(args[0])
-    invoiceDate = args[1]
+    invoiceDate = args[0]
     paymentStatus = "New"
-    contractIDStr = args[2]
-    contractID, _ = strconv.Atoi(args[2])
+    contractIDStr = args[1]
+    contractID, _ = strconv.Atoi(args[1])
     
     //Create invoice and store in database
     invoiceObj = invoice {InvoiceID: invoiceID, InvoiceDate: invoiceDate, PaymentStatus: paymentStatus, ContractID: contractID}
@@ -887,18 +883,18 @@ func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args
     
     fmt.Println("Creating new incident...")
     
-    if len(args) < 5 {
-		return nil, errors.New("Incorrect number of arguments. 5 expected")
+    if len(args) < 4 {
+		return nil, errors.New("Incorrect number of arguments. 4 expected")
 	}
     
     incidentIDStr = args[0]
     incidentID, _ = strconv.Atoi(args[0])
-    incidentDate = args[1]
-    expectedEnergyMWH, _ = strconv.ParseFloat(args[2], 64)
-    actualEnergyMWH, _ = strconv.ParseFloat(args[3], 64)
+    incidentDate = args[0]
+    expectedEnergyMWH, _ = strconv.ParseFloat(args[1], 64)
+    actualEnergyMWH, _ = strconv.ParseFloat(args[2], 64)
     incidentStatus = "New"
-    contractIDStr = args[4]
-    contractID, _ = strconv.Atoi(args[4])
+    contractIDStr = args[3]
+    contractID, _ = strconv.Atoi(args[3])
     
     //Create incident and store in database
     incidentObj = incident {IncidentID: incidentID, IncidentDate: incidentDate, IncidentStatus: incidentStatus, ExpectedEnergyMWH: expectedEnergyMWH, ActualEnergyMWH: actualEnergyMWH, ContractID: contractID}
