@@ -781,7 +781,8 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     
     var flowMeter flowMeterData
     var flowMeterList []flowMeterData
-    var invoiceArgs, incidentArgs []string
+    var invoiceArgs [3]string 
+    var incidentArgs [5]string
     var contractObjList []contract
           
     //Convert json string to json object
@@ -811,8 +812,9 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     for _, contractObj := range contractObjList {
         
         fmt.Println(contractObj)
-        
-        if(flowMeter.EnergyMWH <= contractObj.EnergyMWH){
+        // If the energy from flow meter is higher or equal to the energy set in the contract, then create an invoice
+        // Else create an incident
+        if(flowMeter.EnergyMWH >= contractObj.EnergyMWH){
             invoiceArgs[0] = strconv.Itoa(flowMeter.TimestampMS) //Use timestamp as unique ID
             invoiceArgs[1] = invoiceArgs[0] // Timestamp in string
             invoiceArgs[2] = strconv.Itoa(contractObj.ContractID)
