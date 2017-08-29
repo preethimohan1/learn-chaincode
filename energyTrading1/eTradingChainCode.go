@@ -813,11 +813,8 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
         // If the energy from flow meter is higher or equal to the energy set in the contract, then create an invoice
         // Else create an incident
         if(flowMeter.EnergyMWH >= contractObj.EnergyMWH){
-            //Use timestamp as unique ID
-            invoiceArgs := [2]string{ strconv.Itoa(flowMeter.TimestampMS), strconv.Itoa(contractObj.ContractID)}
-            
             //Create invoice
-            t.createInvoice(stub, invoiceArgs)
+            t.createInvoice(stub, flowMeter.TimestampMS, contractObj.ContractID)
         } else {
             incidentArgs:= [4]string {strconv.Itoa(flowMeter.TimestampMS), 
                                         strconv.FormatFloat(contractObj.EnergyMWH, 'E', -1, 64),
@@ -825,30 +822,23 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
                                         strconv.Itoa(contractObj.ContractID)}
             
             //Create incident
-            t.createIncident(stub, incidentArgs)
+            t.createIncident(stub, flowMeter.TimestampMS, contractObj.EnergyMWH, flowMeter.EnergyMWH, contractObj.ContractID)
         }
     }
     return nil, nil
 }
 
-func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, args [2]string ) ([]byte, error) {
-    var invoiceID, contractID int 
+func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, invoiceID int,  contractID int ) ([]byte, error) {
 	var contractIDStr, invoiceIDStr, invoiceDate, paymentStatus string 
     var invoiceObj invoice
     var invoiceIDArr []string
     
     fmt.Println("Creating new invoice...")
     
-    if len(args) < 2 {
-		return nil, errors.New("Incorrect number of arguments. 2 expected")
-	}
-    
-    invoiceIDStr = args[0]
-    invoiceID, _ = strconv.Atoi(args[0])
-    invoiceDate = args[0]
-    paymentStatus = "New"
-    contractIDStr = args[1]
-    contractID, _ = strconv.Atoi(args[1])
+    invoiceIDStr = strconv.Itoa(invoiceID)
+    invoiceDate = invoiceIDStr
+    paymentStatus = "Pending"
+    contractIDStr = strconv.Itoa(contractID)
     
     //Create invoice and store in database
     invoiceObj = invoice {InvoiceID: invoiceID, InvoiceDate: invoiceDate, PaymentStatus: paymentStatus, ContractID: contractID}
@@ -874,27 +864,17 @@ func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, args 
     return nil, nil
 }
 
-func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, args [4]string ) ([]byte, error) {
-    var incidentID, contractID int 
+func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, incidentID int,  expectedEnergyMWH float64, actualEnergyMWH float64, contractID int  ) ([]byte, error) {
 	var contractIDStr, incidentIDStr, incidentDate, incidentStatus string 
     var incidentObj incident
     var incidentIDArr []string
-    var expectedEnergyMWH, actualEnergyMWH float64
     
     fmt.Println("Creating new incident...")
     
-    if len(args) < 4 {
-		return nil, errors.New("Incorrect number of arguments. 4 expected")
-	}
-    
-    incidentIDStr = args[0]
-    incidentID, _ = strconv.Atoi(args[0])
-    incidentDate = args[0]
-    expectedEnergyMWH, _ = strconv.ParseFloat(args[1], 64)
-    actualEnergyMWH, _ = strconv.ParseFloat(args[2], 64)
+    incidentIDStr = strconv.Itoa(incidentID)
+    incidentDate = incidentIDStr
     incidentStatus = "New"
-    contractIDStr = args[3]
-    contractID, _ = strconv.Atoi(args[3])
+    contractIDStr = strconv.Itoa(contractID)
     
     //Create incident and store in database
     incidentObj = incident {IncidentID: incidentID, IncidentDate: incidentDate, IncidentStatus: incidentStatus, ExpectedEnergyMWH: expectedEnergyMWH, ActualEnergyMWH: actualEnergyMWH, ContractID: contractID}
@@ -1061,11 +1041,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.topupBankBalance(stub, args)
 	} else if function == "addIOTData" {
 		return t.addIOTData(stub, args)
-	} else if function == "createInvoice" {
-		return t.createInvoice(stub, args)
-	} else if function == "createIncident" {
-		return t.createIncident(stub, args)
-	}
+	} 
  
 	fmt.Println("Invoke did not find function:" + function)
 
