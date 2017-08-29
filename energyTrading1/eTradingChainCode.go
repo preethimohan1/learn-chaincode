@@ -802,7 +802,7 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     //Check for invoice or incident to be created
     
     //Get all the contracts with this transporter/buyer
-    contractObjList = t.getContractObjList(stub, flowMeter.CompanyID)
+    contractObjList = t.getContractObjList(stub, transportRequestKey, flowMeter.CompanyID)
     
     for _, contractObj := range contractObjList {
         
@@ -964,7 +964,7 @@ func (t *SimpleChaincode) getInvoiceList (stub shim.ChaincodeStubInterface, args
         _ = json.Unmarshal(invoiceObjBytes, &invoiceObj)
         fmt.Println(invoiceObj)
         
-        returnMessage = returnMessage + string(invoiceObj) 
+        returnMessage = returnMessage + string(invoiceObjBytes) 
         
         lenArr = lenArr - 1 
         if (lenArr != 0) {
@@ -1002,7 +1002,7 @@ func (t *SimpleChaincode) getIncidentList (stub shim.ChaincodeStubInterface, arg
         _ = json.Unmarshal(incidentObjBytes, &incidentObj)
         fmt.Println(incidentObj)
         
-        returnMessage = returnMessage + string(incidentObj) 
+        returnMessage = returnMessage + string(incidentObjBytes) 
         
         lenArr = lenArr - 1 
         if (lenArr != 0) {
