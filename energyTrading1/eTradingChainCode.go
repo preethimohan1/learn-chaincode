@@ -743,6 +743,32 @@ func (t *SimpleChaincode) getGasRequestList(stub shim.ChaincodeStubInterface, ar
     return t.getContractList(stub, gasRequestKey, args)
 }
 
+func (t *SimpleChaincode) getContractObjList(stub shim.ChaincodeStubInterface, idArrKey string, companyID string) ([]contract) {
+	var lenMap int	
+    var contractIDList []string
+    var contractObj contract
+    var contractObjList []contract
+    
+    fmt.Println("Getting Contract Objects for company: "+ companyID)
+	
+	contractListObjBytes, _ := stub.GetState(idArrKey)
+	_ = json.Unmarshal(contractListObjBytes, &contractIDList)
+    
+	lenMap = len(contractIDList)
+	for _, k := range contractIDList {
+        
+		contractObjBytes, _ := stub.GetState(k)
+        _ = json.Unmarshal(contractObjBytes, &contractObj)
+        fmt.Println(contractObj)
+        
+        if(contractObj.InitiatorID == companyID || contractObj.ReceiverID == companyID) {
+            contractObjList = append(contractObjList, contractObj)
+        }            
+	}
+	
+	return contractObjList
+}
+
 func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
     //args[0] = {"device_id": "GasFlowMeter_1", "device_location": "Location 1", "company_id": "TRANSPORTER1", "pressure_kpa": 100, "temperature_c": 20, "specific_gravity": 0.65, "energy_mwh": 100,"timestamp_ms":1503416349302}
     
@@ -750,8 +776,9 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     
     var flowMeter flowMeterData
     var flowMeterList []flowMeterData
-    var contractIDList, invoiceArgs, incidentArgs []string
+    var invoiceArgs, incidentArgs []string
     var contractObj contract
+    var contractObjList []contract
           
     //Convert json string to json object
     _ = json.Unmarshal([]byte(args[0]), &flowMeter)
@@ -773,16 +800,12 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     fmt.Println(flowMeterList)
     
     //Check for invoice or incident to be created
-    var tArgs []string
-    tArgs[0] = flowMeter.CompanyID
-    //Get all the contracts with this transporter/buyer
-    trListObjBytes, _ := t.getTransportRequestList(stub, tArgs)
-    _ = json.Unmarshal(trListObjBytes, &contractIDList)
     
-    for _, k := range contractIDList {
+    //Get all the contracts with this transporter/buyer
+    contractObjList := t.getContractObjList(stub, flowMeter.CompanyID)
+    
+    for _, contractObj := range contractObjList {
         
-		contractObjBytes, _ := stub.GetState(k)
-        _ = json.Unmarshal(contractObjBytes, &contractObj)
         fmt.Println(contractObj)
         
         if(flowMeter.EnergyMWH < contractObj.EnergyMWH){
@@ -902,7 +925,7 @@ func (t *SimpleChaincode) getIOTData (stub shim.ChaincodeStubInterface, args[] s
     
     companyID = args[0]
     
-     //Get the flow meter data list for this company
+    //Get the flow meter data list for this company
     var arrKey = companyID + iotKeyAffix
     flowMeterObjBytes, _ := stub.GetState(arrKey) 
     _ = json.Unmarshal(flowMeterObjBytes, &flowMeterList)
@@ -913,7 +936,82 @@ func (t *SimpleChaincode) getIOTData (stub shim.ChaincodeStubInterface, args[] s
     
     return []byte(returnMessage), nil
 }
-                                                                                          
+    
+func (t *SimpleChaincode) getInvoiceList (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
+    fmt.Println("Getting list of invoices for company ID: " + args[0])
+    var lenArr int
+	var invoiceIDArr []string
+	var companyID, returnMessage string
+    var invoiceObj invoice
+    
+    
+    if len(args) < 1 {
+        return nil, errors.New("Incorrect number of arguments. 1 expected (Company ID)")
+	}
+    
+    companyID = args[0]
+        
+    var arrKey = companyID + invoiceAffix
+    invoiceIDArrBytes, _ := stub.GetState(arrKey)
+	_ = json.Unmarshal(invoiceIDArrBytes, &invoiceIDArr)
+    
+    fmt.Println(invoiceIDArr)
+    
+	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
+	lenArr = len(invoiceIDArr)
+	for _, k := range invoiceIDArr {
+		invoiceObjBytes, _ := stub.GetState(k)
+        _ = json.Unmarshal(invoiceObjBytes, &invoiceObj)
+        fmt.Println(invoiceObj)
+        
+        returnMessage = returnMessage + string(invoiceObj) 
+        
+        lenArr = lenArr - 1 
+        if (lenArr != 0) {
+            returnMessage = returnMessage + ","
+        } 
+	} 
+	returnMessage = returnMessage + "]}"
+	return []byte(returnMessage), nil
+} 
+
+func (t *SimpleChaincode) getIncidentList (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
+    fmt.Println("Getting list of incidents for company ID: " + args[0])
+    var lenArr int
+	var incidentIDArr []string
+	var companyID, returnMessage string
+    var incidentObj incident
+    
+    
+    if len(args) < 1 {
+        return nil, errors.New("Incorrect number of arguments. 1 expected (Company ID)")
+	}
+    
+    companyID = args[0]
+        
+    var arrKey = companyID + incidentAffix
+    incidentIDArrBytes, _ := stub.GetState(arrKey)
+	_ = json.Unmarshal(incidentIDArrBytes, &incidentIDArr)
+    
+    fmt.Println(incidentIDArr)
+    
+	returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : ["
+	lenArr = len(incidentIDArr)
+	for _, k := range incidentIDArr {
+		incidentObjBytes, _ := stub.GetState(k)
+        _ = json.Unmarshal(incidentObjBytes, &incidentObj)
+        fmt.Println(incidentObj)
+        
+        returnMessage = returnMessage + string(incidentObj) 
+        
+        lenArr = lenArr - 1 
+        if (lenArr != 0) {
+            returnMessage = returnMessage + ","
+        } 
+	} 
+	returnMessage = returnMessage + "]}"
+	return []byte(returnMessage), nil
+} 
 
 func testEqualSlice (a []byte, b []byte) bool {
 
@@ -961,6 +1059,10 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.topupBankBalance(stub, args)
 	} else if function == "addIOTData" {
 		return t.addIOTData(stub, args)
+	} else if function == "createInvoice" {
+		return t.createInvoice(stub, args)
+	} else if function == "createIncident" {
+		return t.createIncident(stub, args)
 	}
  
 	fmt.Println("Invoke did not find function:" + function)
@@ -989,6 +1091,10 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.getBusinessPlanList(stub, args)
     } else if function == "getIOTData" {
 		return t.getIOTData(stub, args)
+    } else if function == "getInvoiceList" {
+		return t.getInvoiceList(stub, args)
+    } else if function == "getIncidentList" {
+		return t.getIncidentList(stub, args)
     }
     
 	fmt.Println("Query did not find func: " + function)
