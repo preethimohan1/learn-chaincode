@@ -77,6 +77,8 @@ type contractInfo struct {
     Contract     contract       `json:"contract"`
     InitiatorCompany company    `json:"initiator_company"`
     ReceiverCompany  company    `json:"receiver_company"`
+    InvoiceList     []invoice   `json:"invoice_list"`
+    IncidentList    []incident  `json:"incident_list"`
 }
 
 type flowMeterData struct {
@@ -683,7 +685,7 @@ func (t *SimpleChaincode) updateContractStatus(stub shim.ChaincodeStubInterface,
 }*/
 
 func (t *SimpleChaincode) getContractList(stub shim.ChaincodeStubInterface, idArrKey string, args[] string) ([]byte, error) {
-	var companyID, returnMessage string
+	var companyID, contractIDStr, returnMessage string
 	var lenMap int	
     var contractIDList []string
     var contractObj contract
@@ -723,6 +725,13 @@ func (t *SimpleChaincode) getContractList(stub shim.ChaincodeStubInterface, idAr
             if err1 != nil {
               return nil, err1
             }
+            
+            //Add invoices and incidents related to the contracts
+            contractIDStr = strconv.Itoa(contractObj.ContractID)
+            invoiceList, incidentList := t.getInvoiceIncidentList(stub, contractIDStr)
+            
+            contractFullObj.InvoiceList = invoiceList
+            contractFullObj.IncidentList = incidentList
             
             returnMessage = returnMessage + string(contractFullObjBytes)
         }
@@ -918,17 +927,16 @@ func (t *SimpleChaincode) getInvoiceList (stub shim.ChaincodeStubInterface, args
     fmt.Println("Getting list of invoices for company ID: " + args[0])
     var lenArr int
 	var invoiceIDArr []string
-	var companyID, returnMessage string
+	var contractID, returnMessage string
     var invoiceObj invoice
     
-    
     if len(args) < 1 {
-        return nil, errors.New("Incorrect number of arguments. 1 expected (Company ID)")
+        return nil, errors.New("Incorrect number of arguments. 1 expected (Contract ID)")
 	}
     
-    companyID = args[0]
+    contractID = args[0]
         
-    var arrKey = companyID + invoiceAffix
+    var arrKey = contractID + invoiceAffix
     invoiceIDArrBytes, _ := stub.GetState(arrKey)
 	_ = json.Unmarshal(invoiceIDArrBytes, &invoiceIDArr)
     
@@ -956,17 +964,17 @@ func (t *SimpleChaincode) getIncidentList (stub shim.ChaincodeStubInterface, arg
     fmt.Println("Getting list of incidents for company ID: " + args[0])
     var lenArr int
 	var incidentIDArr []string
-	var companyID, returnMessage string
+	var contractID, returnMessage string
     var incidentObj incident
     
     
     if len(args) < 1 {
-        return nil, errors.New("Incorrect number of arguments. 1 expected (Company ID)")
+        return nil, errors.New("Incorrect number of arguments. 1 expected (Contract ID)")
 	}
     
-    companyID = args[0]
+    contractID = args[0]
         
-    var arrKey = companyID + incidentAffix
+    var arrKey = contractID + incidentAffix
     incidentIDArrBytes, _ := stub.GetState(arrKey)
 	_ = json.Unmarshal(incidentIDArrBytes, &incidentIDArr)
     
@@ -989,6 +997,46 @@ func (t *SimpleChaincode) getIncidentList (stub shim.ChaincodeStubInterface, arg
 	returnMessage = returnMessage + "]}"
 	return []byte(returnMessage), nil
 } 
+
+func (t *SimpleChaincode) getInvoiceIncidentList(stub shim.ChaincodeStubInterface, contractID string) ([]invoice, []incident) {
+    var invoiceIDList, incidentIDList []string
+    var invoiceObj invoice
+    var invoiceObjList []invoice
+    var incidentObj incident
+    var incidentObjList []incident
+    
+    fmt.Println("Getting Invoice and Incident Objects for contract: "+ contractID)
+	
+    var idArrKey = contractID + invoiceAffix
+	invoiceIDListObjBytes, _ := stub.GetState(idArrKey)
+	_ = json.Unmarshal(invoiceIDListObjBytes, &invoiceIDList)
+    
+	for _, k := range invoiceIDList {
+        
+		invoiceObjBytes, _ := stub.GetState(k)
+        _ = json.Unmarshal(invoiceObjBytes, &invoiceObj)
+        
+        invoiceObjList = append(invoiceObjList, invoiceObj)
+	}
+	
+    fmt.Println(invoiceObjList)
+    
+    idArrKey = contractID + incidentAffix
+	incidentIDListObjBytes, _ := stub.GetState(idArrKey)
+	_ = json.Unmarshal(incidentIDListObjBytes, &incidentIDList)
+    
+	for _, k := range incidentIDList {
+        
+		incidentObjBytes, _ := stub.GetState(k)
+        _ = json.Unmarshal(incidentObjBytes, &incidentObj)
+        
+        incidentObjList = append(incidentObjList, incidentObj)
+	}
+    
+    fmt.Println(incidentObjList)
+    
+	return invoiceObjList, incidentObjList
+}
 
 func testEqualSlice (a []byte, b []byte) bool {
 
