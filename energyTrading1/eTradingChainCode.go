@@ -1056,7 +1056,7 @@ func (t *SimpleChaincode) getInvoiceIncidentList(stub shim.ChaincodeStubInterfac
 }
 
 func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
-    var returnMessage, invoiceIDStr, contractIDStr, planIDStr, totalCostStr, bankBalStr string
+    var returnMessage, invoiceIDStr, contractIDStr, planIDKey, totalCostStr, bankBalStr string
     var contractObj contract
     var planObj businessPlan
     var totalCost float64
@@ -1077,8 +1077,8 @@ func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] 
     _ = json.Unmarshal(contractObjBytes, &contractObj)
         
     //Fetch gas price from the Business Plan
-    var key = contractObj.ReceiverID + planIDAffix 
-    planObjBytes, _ := stub.GetState(key)
+    planIDKey = contractObj.ReceiverID + planIDAffix 
+    planObjBytes, _ := stub.GetState(planIDKey)
     _ = json.Unmarshal(planObjBytes, &planObj)
     
     //Energy consumed * gas price per mwh
