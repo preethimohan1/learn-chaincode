@@ -1092,7 +1092,7 @@ func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] 
     if (initiatorCompany.BankBalance < totalCost) {
         totalCostStr = strconv.FormatFloat(totalCost, 'E', -1, 64)
         bankBalStr = strconv.FormatFloat(initiatorCompany.BankBalance, 'E', -1, 64)
-        returnMessage = "{\"statusCode\" : \"FAIL\", \"body\" : \"Transaction FAILED: Insufficient funds (Bank Balance: "+ initiatorCompany.BankBalance +", Invoice payment amount: "+totalCostStr+")\"}"
+        returnMessage = "{\"statusCode\" : \"FAIL\", \"body\" : \"Transaction FAILED: Insufficient funds (Bank Balance: "+ bankBalStr +", Invoice payment amount: "+totalCostStr+")\"}"
         
         return []byte(returnMessage), nil
     } else {
@@ -1126,7 +1126,7 @@ func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] 
     invoiceObj.PaymentStatus = "Paid"
     
     invoiceObjBytes, _ = json.Marshal(&invoiceObj)
-    _ = stub.PutState(invoiceID, invoiceObjBytes)
+    _ = stub.PutState(invoiceIDStr, invoiceObjBytes)
     
     fmt.Println(invoiceObj)
     
