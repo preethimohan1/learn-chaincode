@@ -729,9 +729,14 @@ func (t *SimpleChaincode) getContractList(stub shim.ChaincodeStubInterface, idAr
             //Add invoices and incidents related to the contracts
             contractIDStr = strconv.Itoa(contractObj.ContractID)
             invoiceList, incidentList := t.getInvoiceIncidentList(stub, contractIDStr)
+            fmt.Println("Printing invoice and incident list")
+            fmt.Println(invoiceList)
+            fmt.Println(incidentList)
             
             contractFullObj.InvoiceList = invoiceList
             contractFullObj.IncidentList = incidentList
+            
+            fmt.Println(contractFullObjBytes)
             
             returnMessage = returnMessage + string(contractFullObjBytes)
         }
