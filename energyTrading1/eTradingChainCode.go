@@ -11,12 +11,13 @@ import (
 )
 
 var companyKey = "COMPANYIDLIST"
-var userIDAffix = "USERLIST"    //<CompanyType>USERLIST
 var tradeRequestKey = "TRADEREQUESTIDLIST"
 var transportRequestKey = "TRANSPORTREQUESTIDLIST"
 var gasRequestKey = "GASREQUESTIDLIST"
 var planKey = "PLANIDLIST"
-var planIDPrefix = "PLAN_"      // PLAN_<CompanyID>
+
+var userIDAffix = "_USERLIST"    //<CompanyType>_USERLIST
+var planIDAffix = "_PLAN"      // <CompanyID>_PLAN
 var iotKeyAffix = "_IOTDATA"    //<CompanyID>_IOTDATA
 var invoiceAffix = "_INVOICELIST"   //<ContractID>_INVOICELIST
 var incidentAffix = "_INCIDENTLIST" //<ContractID>_INCIDENTLIST
@@ -31,7 +32,7 @@ type company struct {
 	CompanyName 	string	`json:"company_name"`
 	CompanyLocation	string	`json:"company_location"`
 	BankBalance		float64	`json:"bank_balance"`
-    BalanceUpdatedDate		string	`json:"bank_balance_date"`
+    BalanceUpdatedDateMS		int	`json:"bank_balance_date_ms"`
 }
 
 type user struct {
@@ -77,6 +78,7 @@ type contractInfo struct {
     Contract     contract       `json:"contract"`
     InitiatorCompany company    `json:"initiator_company"`
     ReceiverCompany  company    `json:"receiver_company"`
+    BusinessPlan     businessPlan `json:"business_plan"`
     InvoiceList     []invoice   `json:"invoice_list"`
     IncidentList    []incident  `json:"incident_list"`
 }
@@ -94,15 +96,15 @@ type flowMeterData struct {
 
 type invoice struct {
 	InvoiceID          int     `json:"invoice_id"`
-	InvoiceDate        string  `json:"invoice_date"`
+	InvoiceDateMS      int     `json:"invoice_date_ms"`
 	PaymentStatus      string  `json:"payment_status"`
-	PaymentDate        string  `json:"payment_date"`
+	PaymentDateMS      int     `json:"payment_date_ms"`
     ContractID         int     `json:"contract_id"`
 }
 
 type incident struct {
 	IncidentID          int     `json:"incident_id"`
-	IncidentDate        string  `json:"incident_date"`
+	IncidentDateMS      int     `json:"incident_date_ms"`
     IncidentStatus      string  `json:"incident_status"`
 	ExpectedEnergyMWH   float64 `json:"expected_energy_mwh"`
     ActualEnergyMWH     float64 `json:"actual_energy_mwh"`
@@ -122,10 +124,13 @@ func main() {
 }
 
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-    var currentDate string    
+    var currentDate int
+    currentDate = 0
+    
+    var currentDateStr string
     year, month, day := time.Now().Date()
     var monthInNumber int = int(month) //convert time.Month to integer
-    currentDate = strconv.Itoa(day) + "/" + strconv.Itoa(monthInNumber) + "/" + strconv.Itoa(year)
+    currentDateStr = strconv.Itoa(day) + "/" + strconv.Itoa(monthInNumber) + "/" + strconv.Itoa(year)
     
     //Create default companies
     var compIDArr CompanyIDList
@@ -178,37 +183,37 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     //Create business plan for producers
     var planID string
     var bpIDList BusinessPlanIDList
-    planID = planIDPrefix + "PRODUCER1"
-    t.createBusinessPlan(stub, bpIDList, planID, currentDate, 12.0, "Europe", 200, "Wardenburg", 200, "PRODUCER1")     
+    planID = "PRODUCER1" + planIDAffix
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 12.0, "Europe", 200, "Wardenburg", 200, "PRODUCER1")     
     bpIDList = append(bpIDList, planID)
-    planID = planIDPrefix + "PRODUCER2"
-    t.createBusinessPlan(stub, bpIDList, planID, currentDate, 10.0, "Europe", 300, "Ellund", 300, "PRODUCER2")
+    planID = "PRODUCER2" + planIDAffix
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 10.0, "Europe", 300, "Ellund", 300, "PRODUCER2")
     bpIDList = append(bpIDList, planID)
     
     //Create business plan for trasporters
-    planID = planIDPrefix + "TRANSPORTER1"
-    t.createBusinessPlan(stub, bpIDList, planID, currentDate, 11.0, "Wardenburg", 200, "Bunder-Tief", 100, "TRANSPORTER1")  
+    planID = "TRANSPORTER1" + planIDAffix
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 11.0, "Wardenburg", 200, "Bunder-Tief", 100, "TRANSPORTER1")  
     bpIDList = append(bpIDList, planID)
     
-    planID = planIDPrefix + "TRANSPORTER2"
-    t.createBusinessPlan(stub, bpIDList, planID, currentDate, 9.0, "Ellund", 300, "Steinbrink", 150, "TRANSPORTER2")
+    planID = "TRANSPORTER2" + planIDAffix
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 9.0, "Ellund", 300, "Steinbrink", 150, "TRANSPORTER2")
     bpIDList = append(bpIDList, planID)
     
-    planID = planIDPrefix + "TRANSPORTER3"
-    t.createBusinessPlan(stub, bpIDList, planID, currentDate, 8.0, "Ellund", 350, "Steinitz", 175, "TRANSPORTER3")
+    planID = "TRANSPORTER3" + planIDAffix
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 8.0, "Ellund", 350, "Steinitz", 175, "TRANSPORTER3")
     bpIDList = append(bpIDList, planID)
     
 	return nil, nil
 }
 
 func (t *SimpleChaincode) addCompany (stub shim.ChaincodeStubInterface, compIDArr CompanyIDList, compID string, 
-				       compType string, compName string, compLoc string, bankBalance float64,  balanceDate string) bool {
+				       compType string, compName string, compLoc string, bankBalance float64,  balanceDate int) bool {
     fmt.Println("Adding new company:"+ compName)
    
 	var newCompany company
     
 	newCompany = company{CompanyID: compID, CompanyType: compType, CompanyName: compName, 
-                         CompanyLocation: compLoc, BankBalance: bankBalance, BalanceUpdatedDate: balanceDate}
+                         CompanyLocation: compLoc, BankBalance: bankBalance, BalanceUpdatedDateMS: balanceDate}
     
 	compObjBytes, err := json.Marshal(&newCompany)
 	if err != nil {
@@ -362,7 +367,7 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
         
         //Get Business Plan info
         if compStruct.CompanyType == "Producer" || compStruct.CompanyType == "Transporter" {
-            bpInfo, _ := stub.GetState(planIDPrefix + compID)	
+            bpInfo, _ := stub.GetState(compID + planIDAffix)	
             _ = json.Unmarshal(bpInfo, &busPlanStruct)
             userInfoObj.BusinessPlan = busPlanStruct
         }
@@ -418,7 +423,8 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 
 
 func (t *SimpleChaincode) topupBankBalance(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-	var compID, topupDate string
+	var compID string
+    var topupDate int
 	var topupAmount float64
 	var companyObj company
     
@@ -430,7 +436,7 @@ func (t *SimpleChaincode) topupBankBalance(stub shim.ChaincodeStubInterface, arg
 
 	compID = args[0]
 	topupAmount, _ = strconv.ParseFloat(args[1], 64)
-    topupDate = args[2]
+    topupDate, _ = strconv.Atoi(args[2])
     
     //Get the company object from DB
     compObjBytes, _ := stub.GetState(compID)
@@ -439,7 +445,7 @@ func (t *SimpleChaincode) topupBankBalance(stub shim.ChaincodeStubInterface, arg
     
     //Topup the amount   
     companyObj.BankBalance = companyObj.BankBalance + topupAmount   
-    companyObj.BalanceUpdatedDate = topupDate
+    companyObj.BalanceUpdatedDateMS = topupDate
         
     companyObjBytes, err := json.Marshal(&companyObj)
     if err != nil {
@@ -448,8 +454,8 @@ func (t *SimpleChaincode) topupBankBalance(stub shim.ChaincodeStubInterface, arg
     }
     err3 := stub.PutState(compID, companyObjBytes)
     if err3 != nil {
-        return nil, errors.New("Failed to save Company info")
         fmt.Println(err3)
+        return nil, errors.New("Failed to save Company info")
     } 
 	
 	return nil, nil
@@ -685,11 +691,12 @@ func (t *SimpleChaincode) updateContractStatus(stub shim.ChaincodeStubInterface,
 }*/
 
 func (t *SimpleChaincode) getContractList(stub shim.ChaincodeStubInterface, idArrKey string, args[] string) ([]byte, error) {
-	var companyID, contractIDStr, returnMessage string
+	var companyID, contractIDStr, returnMessage, key string
 	var lenMap int	
     var contractIDList []string
     var contractObj contract
     var contractFullObj contractInfo
+    var businessPlanObj businessPlan
     var initiatorCompany, receiverCompany company
     
     companyID = args[0]
@@ -720,6 +727,12 @@ func (t *SimpleChaincode) getContractList(stub shim.ChaincodeStubInterface, idAr
             receiverObjBytes, _ := stub.GetState(contractObj.ReceiverID)
             _ = json.Unmarshal(receiverObjBytes, &receiverCompany)
             contractFullObj.ReceiverCompany = receiverCompany
+            
+            //Add Business plan that is linked to this contract
+            key = receiverCompany.CompanyID + planIDAffix
+            planObjBytes, _ := stub.GetState(key)
+            _ = json.Unmarshal(planObjBytes, &businessPlanObj)
+            contractFullObj.BusinessPlan = businessPlanObj
             
             //Add invoices and incidents related to the contracts
             contractIDStr = strconv.Itoa(contractObj.ContractID)
@@ -835,19 +848,20 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
 }
 
 func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, invoiceID int,  contractID int ) ([]byte, error) {
-	var contractIDStr, invoiceIDStr, invoiceDate, paymentStatus string 
+	var contractIDStr, invoiceIDStr, paymentStatus string 
+    var invoiceDateMS int
     var invoiceObj invoice
     var invoiceIDArr []string
     
     fmt.Println("Creating new invoice...")
     
     invoiceIDStr = strconv.Itoa(invoiceID)
-    invoiceDate = invoiceIDStr
+    invoiceDateMS = invoiceID
     paymentStatus = "Pending"
     contractIDStr = strconv.Itoa(contractID)
     
     //Create invoice and store in database
-    invoiceObj = invoice {InvoiceID: invoiceID, InvoiceDate: invoiceDate, PaymentStatus: paymentStatus, ContractID: contractID}
+    invoiceObj = invoice {InvoiceID: invoiceID, InvoiceDateMS: invoiceDateMS, PaymentStatus: paymentStatus, ContractID: contractID}
     invoiceObjBytes, err1 := json.Marshal(invoiceObj)
 	if err1 != nil {
 		return nil, err1
@@ -871,19 +885,20 @@ func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, invoi
 }
 
 func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, incidentID int,  expectedEnergyMWH float64, actualEnergyMWH float64, contractID int  ) ([]byte, error) {
-	var contractIDStr, incidentIDStr, incidentDate, incidentStatus string 
+	var contractIDStr, incidentIDStr, incidentStatus string 
+    var incidentDateMS int
     var incidentObj incident
     var incidentIDArr []string
     
     fmt.Println("Creating new incident...")
     
     incidentIDStr = strconv.Itoa(incidentID)
-    incidentDate = incidentIDStr
+    incidentDateMS = incidentID
     incidentStatus = "New"
     contractIDStr = strconv.Itoa(contractID)
     
     //Create incident and store in database
-    incidentObj = incident {IncidentID: incidentID, IncidentDate: incidentDate, IncidentStatus: incidentStatus, ExpectedEnergyMWH: expectedEnergyMWH, ActualEnergyMWH: actualEnergyMWH, ContractID: contractID}
+    incidentObj = incident {IncidentID: incidentID, IncidentDateMS: incidentDateMS, IncidentStatus: incidentStatus, ExpectedEnergyMWH: expectedEnergyMWH, ActualEnergyMWH: actualEnergyMWH, ContractID: contractID}
     incidentObjBytes, err1 := json.Marshal(incidentObj)
 	if err1 != nil {
 		return nil, err1
@@ -1040,6 +1055,85 @@ func (t *SimpleChaincode) getInvoiceIncidentList(stub shim.ChaincodeStubInterfac
 	return invoiceObjList, incidentObjList
 }
 
+func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
+    var returnMessage, invoiceIDStr, contractIDStr, planIDStr, totalCostStr, bankBalStr string
+    var contractObj contract
+    var planObj businessPlan
+    var totalCost float64
+    var initiatorCompany, receiverCompany company
+    var invoiceObj invoice
+    var currentDate int
+    
+    fmt.Println("Pay for the contract (Invoice ID: "+ args[0] + ")")
+    if len(args) < 3 {
+        return nil, errors.New("Incorrect number of arguments. 3 expected (Invoice ID, Contract ID, Current Date in MilliSecs)")
+	}
+    
+    invoiceIDStr = args[0]
+    contractIDStr = args[1]
+    currentDate, _ = strconv.Atoi(args[2])
+    
+    contractObjBytes, _ := stub.GetState(contractIDStr)
+    _ = json.Unmarshal(contractObjBytes, &contractObj)
+        
+    //Fetch gas price from the Business Plan
+    var key = contractObj.ReceiverID + planIDAffix 
+    planObjBytes, _ := stub.GetState(key)
+    _ = json.Unmarshal(planObjBytes, &planObj)
+    
+    //Energy consumed * gas price per mwh
+    totalCost = contractObj.EnergyMWH * planObj.GasPrice
+    
+    //Fetch Initiator company
+    initiatorCompanyObjBytes, _ := stub.GetState(contractObj.InitiatorID)
+    _ = json.Unmarshal(initiatorCompanyObjBytes, &initiatorCompany)
+    
+    //Subtract amount from initiator company
+    if (initiatorCompany.BankBalance < totalCost) {
+        totalCostStr = strconv.FormatFloat(totalCost, 'E', -1, 64)
+        bankBalStr = strconv.FormatFloat(initiatorCompany.BankBalance, 'E', -1, 64)
+        returnMessage = "{\"statusCode\" : \"FAIL\", \"body\" : \"Transaction FAILED: Insufficient funds (Bank Balance: "+ initiatorCompany.BankBalance +", Invoice payment amount: "+totalCostStr+")\"}"
+        
+        return []byte(returnMessage), nil
+    } else {
+        initiatorCompany.BankBalance = initiatorCompany.BankBalance - totalCost
+        initiatorCompany.BalanceUpdatedDateMS = currentDate
+        initiatorCompanyObjBytes, _ = json.Marshal(&initiatorCompany)
+        _ = stub.PutState(initiatorCompany.CompanyID, initiatorCompanyObjBytes)
+        
+        fmt.Println(initiatorCompany)
+    }
+    
+    
+    //Add the amount to Receiver company
+    receiverCompanyObjBytes, _ := stub.GetState(contractObj.ReceiverID)
+    _ = json.Unmarshal(receiverCompanyObjBytes, &receiverCompany)
+    
+    receiverCompany.BankBalance = receiverCompany.BankBalance + totalCost
+    receiverCompany.BalanceUpdatedDateMS = currentDate
+    
+    receiverCompanyObjBytes, _ = json.Marshal(&receiverCompany)
+    _ = stub.PutState(receiverCompany.CompanyID, receiverCompanyObjBytes)
+    
+    fmt.Println(receiverCompany)
+    
+    
+    //Update the invoice payment status and date
+    invoiceObjBytes, _ := stub.GetState(invoiceIDStr)
+    _ = json.Unmarshal(invoiceObjBytes, &invoiceObj)
+    
+    invoiceObj.PaymentDateMS = currentDate
+    invoiceObj.PaymentStatus = "Paid"
+    
+    invoiceObjBytes, _ = json.Marshal(&invoiceObj)
+    _ = stub.PutState(invoiceID, invoiceObjBytes)
+    
+    fmt.Println(invoiceObj)
+    
+    return nil, nil
+}
+    
+
 func testEqualSlice (a []byte, b []byte) bool {
 
 	if a == nil && b == nil { 
@@ -1086,6 +1180,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.topupBankBalance(stub, args)
 	} else if function == "addIOTData" {
 		return t.addIOTData(stub, args)
+	} else if function == "makePayment" {
+		return t.makePayment(stub, args)
 	} 
  
 	fmt.Println("Invoke did not find function:" + function)
