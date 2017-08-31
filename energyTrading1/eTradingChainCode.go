@@ -721,22 +721,19 @@ func (t *SimpleChaincode) getContractList(stub shim.ChaincodeStubInterface, idAr
             _ = json.Unmarshal(receiverObjBytes, &receiverCompany)
             contractFullObj.ReceiverCompany = receiverCompany
             
-            contractFullObjBytes, err1 := json.Marshal(contractFullObj)
-            if err1 != nil {
-              return nil, err1
-            }
-            
             //Add invoices and incidents related to the contracts
             contractIDStr = strconv.Itoa(contractObj.ContractID)
             invoiceList, incidentList := t.getInvoiceIncidentList(stub, contractIDStr)
-            fmt.Println("Printing invoice and incident list")
-            fmt.Println(invoiceList)
-            fmt.Println(incidentList)
             
             contractFullObj.InvoiceList = invoiceList
             contractFullObj.IncidentList = incidentList
             
-            fmt.Println(contractFullObjBytes)
+            fmt.Println(contractFullObj)
+            
+            contractFullObjBytes, err1 := json.Marshal(contractFullObj)
+            if err1 != nil {
+              return nil, err1
+            }
             
             returnMessage = returnMessage + string(contractFullObjBytes)
         }
