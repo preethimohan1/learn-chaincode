@@ -203,6 +203,15 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 8.0, "Ellund", 350, "Steinitz", 175, "TRANSPORTER3")
     bpIDList = append(bpIDList, planID)
     
+    //Create business plan for shippers
+    planID = "SHIPPER1" + planIDAffix
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 0.2, "Europe", 0, "Bunder-Tief, Steinbrink, Steinitz", 0, "SHIPPER1")  
+    bpIDList = append(bpIDList, planID)
+    
+    planID = "SHIPPER2" + planIDAffix
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 0.25, "Europe", 0, "Bunder-Tief, Steinbrink, Steinitz", 0, "SHIPPER2")  
+    bpIDList = append(bpIDList, planID)
+    
 	return nil, nil
 }
 
@@ -366,7 +375,7 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
         fmt.Println(userInfoObj)
         
         //Get Business Plan info
-        if compStruct.CompanyType == "Producer" || compStruct.CompanyType == "Transporter" {
+        if compStruct.CompanyType == "Producer" || compStruct.CompanyType == "Transporter"  || compStruct.CompanyType == "Shipper" {
             bpInfo, _ := stub.GetState(compID + planIDAffix)	
             _ = json.Unmarshal(bpInfo, &busPlanStruct)
             userInfoObj.BusinessPlan = busPlanStruct
