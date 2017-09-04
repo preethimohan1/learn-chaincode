@@ -828,7 +828,7 @@ func (t *SimpleChaincode) getContractArrKey (stub shim.ChaincodeStubInterface, c
         companyTypeKey = gasRequestKey
     }
     
-    return companyType
+    return companyTypeKey
 }
 
 func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
