@@ -205,11 +205,11 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     
     //Create business plan for shippers
     planID = "SHIPPER1" + planIDAffix
-    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 0.2, "Europe", 0, "Bunder-Tief, Steinbrink, Steinitz", 0, "SHIPPER1")  
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 0.2, "Europe", 0, "Bunder-Tief, Steinbrink", 0, "SHIPPER1") 
     bpIDList = append(bpIDList, planID)
     
     planID = "SHIPPER2" + planIDAffix
-    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 0.25, "Europe", 0, "Bunder-Tief, Steinbrink, Steinitz", 0, "SHIPPER2")  
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 0.25, "Europe", 0, "Steinitz", 0, "SHIPPER2")  
     bpIDList = append(bpIDList, planID)
     
 	return nil, nil
@@ -591,7 +591,7 @@ func (t *SimpleChaincode) updateBusinessPlan(stub shim.ChaincodeStubInterface, a
 
 func (t *SimpleChaincode) createContract(stub shim.ChaincodeStubInterface, idArrKey string, args[] string) ([]byte, error) {
     
-	var initiatorID, contractIDString, receiverID, contractStartDate, contractEndDate, contractStatus string
+	var initiatorID, contractIDString, receiverID, contractStartDate, contractEndDate, contractStatus, entryLocation string
 	var contractID int
 	var energyMWH float64
 	var contractObj contract
@@ -611,10 +611,14 @@ func (t *SimpleChaincode) createContract(stub shim.ChaincodeStubInterface, idArr
 	contractStartDate = args[4]
 	contractEndDate = args[5]
 	contractStatus = "New"	
-
+    entryLocation = "Europe";
+    
+    if(len(args) == 7) { // Buyer adds location for gas request
+        entryLocation = args[6];
+    } 
+    
 	contractObj = contract{ContractID: contractID, InitiatorID: initiatorID, ReceiverID: receiverID,
-	EnergyMWH: energyMWH, ContractStartDate: contractStartDate, ContractEndDate: contractEndDate, 
-	ContractStatus: contractStatus }
+                           EnergyMWH: energyMWH, EntryLocation: entryLocation, ContractStartDate: contractStartDate, ContractEndDate: contractEndDate, ContractStatus: contractStatus }
 
 	//Putting on RocksDB database.
 	contractObjBytes, err1 := json.Marshal(contractObj)
@@ -795,16 +799,36 @@ func (t *SimpleChaincode) getContractObjList(stub shim.ChaincodeStubInterface, i
         
 		contractObjBytes, _ := stub.GetState(k)
         _ = json.Unmarshal(contractObjBytes, &contractObj)
-        fmt.Println(contractObj)
         
         if(contractObj.InitiatorID == companyID || contractObj.ReceiverID == companyID) {
             if(contractObj.ContractStatus == "Accepted") {
+                fmt.Println(contractObj)
+                
                 contractObjList = append(contractObjList, contractObj)
             }
         }            
 	}
 	
 	return contractObjList
+}
+
+func (t *SimpleChaincode) getContractArrKey (stub shim.ChaincodeStubInterface, companyID string ) (string) {
+    var companyType, companyTypeKey string
+    var companyObj company
+    
+    compObjBytes, _ := stub.GetState(companyID)   
+    _ = json.Unmarshal(compObjBytes, &companyObj)
+    companyType = companyObj.CompanyType
+    
+    if(companyType == "Producer") {
+        companyTypeKey = tradeRequestKey
+    } else if(companyType == "Transporter") {
+        companyTypeKey = transportRequestKey
+    } else if(companyType == "Buyer") {
+        companyTypeKey = gasRequestKey
+    }
+    
+    return companyType
 }
 
 func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
@@ -815,7 +839,8 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     var flowMeter flowMeterData
     var flowMeterList []flowMeterData
     var contractObjList []contract
-          
+    var contractArrKey string
+    
     //Convert json string to json object
     _ = json.Unmarshal([]byte(args[0]), &flowMeter)
     fmt.Println(flowMeter)
@@ -835,10 +860,13 @@ func (t *SimpleChaincode) addIOTData (stub shim.ChaincodeStubInterface, args[] s
     
     fmt.Println(flowMeterList)
     
+    //Get the key where the contracts are stored for the peer who owns IOT data
+    contractArrKey = t.getContractArrKey(stub, flowMeter.CompanyID)
+    
     //Check for invoice or incident to be created
     
-    //Get all the contracts with this transporter/buyer
-    contractObjList = t.getContractObjList(stub, transportRequestKey, flowMeter.CompanyID)
+    //Get all the contracts with this producer/transporter/buyer
+    contractObjList = t.getContractObjList(stub, contractArrKey, flowMeter.CompanyID)
     
     for _, contractObj := range contractObjList {
         
