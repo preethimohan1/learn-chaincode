@@ -342,6 +342,45 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 }
 
 func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+    var userName, returnMessage string
+    var compStruct company
+    var busPlanStruct businessPlan
+    var userInfoObj userInfo
+    
+    if len (args) < 2 {
+        return nil, errors.New("Incorrect number of arguments. Expecting 2 (userName, compID)")
+	}
+    
+    userName = args[0]
+    compID = args[1]
+    fmt.Println("Getting user info for: "+userName)		
+        
+    //Get Company details
+    compInfo, _ := stub.GetState(compID)	
+    _ = json.Unmarshal(compInfo, &compStruct)
+
+    userInfoObj.UserID = userName
+    userInfoObj.Company = compStruct
+    fmt.Println(userInfoObj)
+
+    //Get Business Plan info
+    if compStruct.CompanyType == "Producer" || compStruct.CompanyType == "Transporter"  || compStruct.CompanyType == "Shipper" {
+        bpInfo, _ := stub.GetState(compID + planIDAffix)	
+        _ = json.Unmarshal(bpInfo, &busPlanStruct)
+        userInfoObj.BusinessPlan = busPlanStruct
+    }
+
+    userInfoObjBytes, err2 := json.Marshal(userInfoObj)
+    if err2 != nil {
+      return nil, err2
+    }
+    returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : " + string(userInfoObjBytes) + "} "
+
+    fmt.Println("User Info: "+ returnMessage)
+    return []byte(returnMessage), nil
+}
+
+func (t *SimpleChaincode) validateUser(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var userName, returnMessage string
     var compStruct company
     var busPlanStruct businessPlan
@@ -355,7 +394,7 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
 	userName = args[0]
     //password = args[1]
     
-    fmt.Println("Getting user info for user: "+userName)
+    fmt.Println("Validating and getting user info: "+userName)
     
 	validUser, err1, compID := t.verifyUser(stub, args)
 	if err1 != nil {
@@ -364,31 +403,8 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
     fmt.Println(compID)
     
 	if validUser == true {
-        fmt.Println("Valid user: "+userName)		
-        
-        //Get Company details
-        compInfo, _ := stub.GetState(compID)	
-        _ = json.Unmarshal(compInfo, &compStruct)
-        
-        userInfoObj.UserID = userName
-        userInfoObj.Company = compStruct
-        fmt.Println(userInfoObj)
-        
-        //Get Business Plan info
-        if compStruct.CompanyType == "Producer" || compStruct.CompanyType == "Transporter"  || compStruct.CompanyType == "Shipper" {
-            bpInfo, _ := stub.GetState(compID + planIDAffix)	
-            _ = json.Unmarshal(bpInfo, &busPlanStruct)
-            userInfoObj.BusinessPlan = busPlanStruct
-        }
-        
-        userInfoObjBytes, err2 := json.Marshal(userInfoObj)
-        if err2 != nil {
-		  return nil, err2
-        }
-        returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : " + string(userInfoObjBytes) + "} "
-        
-        fmt.Println("User Info: "+ returnMessage)
-		return []byte(returnMessage), nil
+        tArgs := []string{userName, compID}
+        return t.getUserInfo(stub, tArgs)
 	} else {
         fmt.Println("Invalid user: "+userName)
         returnMessage = "{\"statusCode\" : \"FAIL\", \"body\" : \"ERROR: Invalid user !\"}"
@@ -1233,6 +1249,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
+	} else if function == "validateUser" {
+		return t.validateUser(stub, args)
 	} else if function == "getUserInfo" {
 		return t.getUserInfo(stub, args)
 	} else if function == "getCompanyList" {
