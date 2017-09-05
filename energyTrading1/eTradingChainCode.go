@@ -205,11 +205,11 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     
     //Create business plan for shippers
     planID = "SHIPPER1" + planIDAffix
-    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 0.2, "Europe", 0, "Bunder-Tief, Steinbrink", 0, "SHIPPER1") 
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 14.0, "Europe", 0, "Bunder-Tief, Steinbrink", 0, "SHIPPER1") 
     bpIDList = append(bpIDList, planID)
     
     planID = "SHIPPER2" + planIDAffix
-    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 0.25, "Europe", 0, "Steinitz", 0, "SHIPPER2")  
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 15.0, "Europe", 0, "Steinitz", 0, "SHIPPER2")  
     bpIDList = append(bpIDList, planID)
     
 	return nil, nil
