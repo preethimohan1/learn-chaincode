@@ -382,9 +382,6 @@ func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []s
 
 func (t *SimpleChaincode) validateUser(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var userName, returnMessage string
-    var compStruct company
-    var busPlanStruct businessPlan
-	var userInfoObj userInfo
     
 	if len(args) != 2 {
         return nil, errors.New("Incorrect number of arguments. Expecting 2 (userName and password).")
