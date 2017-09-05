@@ -342,7 +342,7 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 }
 
 func (t *SimpleChaincode) getUserInfo(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-    var userName, returnMessage string
+    var userName, compID, returnMessage string
     var compStruct company
     var busPlanStruct businessPlan
     var userInfoObj userInfo
