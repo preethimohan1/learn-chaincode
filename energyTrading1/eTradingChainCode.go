@@ -134,15 +134,20 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     
     //Create default companies
     var compIDArr CompanyIDList
-    t.addCompany (stub, compIDArr, "PRODUCER1", "Producer", "Dong Energy", "Europe", 100000, currentDate)
-    compIDArr = append(compIDArr, "PRODUCER1")
-    t.addCompany (stub, compIDArr, "PRODUCER2", "Producer", "Gaz Promp", "Europe", 100000, currentDate)
-    compIDArr = append(compIDArr, "PRODUCER2")
+    t.addCompany (stub, compIDArr, "BUYER1", "Buyer", "EnBW", "Europe", 100000, currentDate)
+    compIDArr = append(compIDArr, "BUYER1")
+    t.addCompany (stub, compIDArr, "BUYER2", "Buyer", "Vattenfall", "Europe", 100000, currentDate)
+    compIDArr = append(compIDArr, "BUYER2")
     
     t.addCompany (stub, compIDArr, "SHIPPER1", "Shipper", "RWE Supply and Trading", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "SHIPPER1")
     t.addCompany (stub, compIDArr, "SHIPPER2", "Shipper", "UNIPER Energy Trading", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "SHIPPER2")
+    
+    t.addCompany (stub, compIDArr, "PRODUCER1", "Producer", "Dong Energy", "Europe", 100000, currentDate)
+    compIDArr = append(compIDArr, "PRODUCER1")
+    t.addCompany (stub, compIDArr, "PRODUCER2", "Producer", "Gaz Promp", "Europe", 100000, currentDate)
+    compIDArr = append(compIDArr, "PRODUCER2")
     
     t.addCompany (stub, compIDArr, "TRANSPORTER1", "Transporter", "Open Grid Europe", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "TRANSPORTER1")
@@ -151,23 +156,24 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     t.addCompany (stub, compIDArr, "TRANSPORTER3", "Transporter", "Gasunie DTS", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "TRANSPORTER3")
     
-    t.addCompany (stub, compIDArr, "BUYER1", "Buyer", "EnBW", "Europe", 100000, currentDate)
-    compIDArr = append(compIDArr, "BUYER1")
-    t.addCompany (stub, compIDArr, "BUYER2", "Buyer", "Vattenfall", "Europe", 100000, currentDate)
-    compIDArr = append(compIDArr, "BUYER2")
     
 	//create default users
 	var userIDArr UserIDList
-    t.addUser(stub, userIDArr, "producer1", "producer1", "PRODUCER1", "Producer")
-    userIDArr = append(userIDArr, "producer1")
-    t.addUser(stub, userIDArr, "producer2", "producer2", "PRODUCER2", "Producer")     
-	userIDArr = append(userIDArr, "producer2")
+    t.addUser(stub, userIDArr, "buyer1", "buyer1", "BUYER1", "Buyer")	
+    userIDArr = append(userIDArr, "buyer1")
+    t.addUser(stub, userIDArr, "buyer2", "buyer2", "BUYER2", "Buyer")	
+    userIDArr = append(userIDArr, "buyer2")
     
     t.addUser(stub, userIDArr, "shipper1", "shipper1", "SHIPPER1", "Shipper")	
     userIDArr = append(userIDArr, "shipper1")
     t.addUser(stub, userIDArr, "shipper2", "shipper2", "SHIPPER2", "Shipper")	
     userIDArr = append(userIDArr, "shipper2")
-	
+    
+    t.addUser(stub, userIDArr, "producer1", "producer1", "PRODUCER1", "Producer")
+    userIDArr = append(userIDArr, "producer1")
+    t.addUser(stub, userIDArr, "producer2", "producer2", "PRODUCER2", "Producer")     
+	userIDArr = append(userIDArr, "producer2")
+    
     t.addUser(stub, userIDArr, "transporter1", "transporter1", "TRANSPORTER1", "Transporter")
     userIDArr = append(userIDArr, "transporter1")
     t.addUser(stub, userIDArr, "transporter2", "transporter2", "TRANSPORTER2", "Transporter")
@@ -175,17 +181,25 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     t.addUser(stub, userIDArr, "transporter3", "transporter3", "TRANSPORTER3", "Transporter")
     userIDArr = append(userIDArr, "transporter3")
 	
-    t.addUser(stub, userIDArr, "buyer1", "buyer1", "BUYER1", "Buyer")	
-    userIDArr = append(userIDArr, "buyer1")
-    t.addUser(stub, userIDArr, "buyer2", "buyer2", "BUYER2", "Buyer")	
-    userIDArr = append(userIDArr, "buyer2")
     
-    //Create business plan for producers
+    //Create business plans
     var planID string
     var bpIDList BusinessPlanIDList
+    
+    //Create business plan for shippers
+    planID = "SHIPPER1" + planIDAffix
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 14.0, "Europe", 0, "Bunder-Tief, Steinbrink", 0, "SHIPPER1") 
+    bpIDList = append(bpIDList, planID)
+    
+    planID = "SHIPPER2" + planIDAffix
+    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 15.0, "Europe", 0, "Steinitz", 0, "SHIPPER2")  
+    bpIDList = append(bpIDList, planID)
+    
+    //Create business plan for producers
     planID = "PRODUCER1" + planIDAffix
     t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 12.0, "Europe", 200, "Wardenburg", 200, "PRODUCER1")     
     bpIDList = append(bpIDList, planID)
+    
     planID = "PRODUCER2" + planIDAffix
     t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 10.0, "Europe", 300, "Ellund", 300, "PRODUCER2")
     bpIDList = append(bpIDList, planID)
@@ -201,15 +215,6 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     
     planID = "TRANSPORTER3" + planIDAffix
     t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 8.0, "Ellund", 350, "Steinitz", 175, "TRANSPORTER3")
-    bpIDList = append(bpIDList, planID)
-    
-    //Create business plan for shippers
-    planID = "SHIPPER1" + planIDAffix
-    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 14.0, "Europe", 0, "Bunder-Tief, Steinbrink", 0, "SHIPPER1") 
-    bpIDList = append(bpIDList, planID)
-    
-    planID = "SHIPPER2" + planIDAffix
-    t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 15.0, "Europe", 0, "Steinitz", 0, "SHIPPER2")  
     bpIDList = append(bpIDList, planID)
     
 	return nil, nil
@@ -452,14 +457,13 @@ func (t *SimpleChaincode) topupBankBalance(stub shim.ChaincodeStubInterface, arg
     
     fmt.Println("Entered function topupBankBalance()")
     
-    if len(args) < 4 {
-        return nil, errors.New("Incorrect number of arguments. Expecting 4 arguments (User ID, CompanyID, top-up amount, top-up date).")
+    if len(args) < 3 {
+        return nil, errors.New("Incorrect number of arguments. Expecting 3 arguments (CompanyID, top-up amount, top-up date).")
 	}
 
-    userID = args[0]
-	compID = args[1]
-	topupAmount, _ = strconv.ParseFloat(args[2], 64)
-    topupDate, _ = strconv.Atoi(args[3])
+	compID = args[0]
+	topupAmount, _ = strconv.ParseFloat(args[1], 64)
+    topupDate, _ = strconv.Atoi(args[2])
     
     //Get the company object from DB
     compObjBytes, _ := stub.GetState(compID)
@@ -480,11 +484,8 @@ func (t *SimpleChaincode) topupBankBalance(stub shim.ChaincodeStubInterface, arg
         fmt.Println(err3)
         return nil, errors.New("Failed to save Company info")
     } 
-	
-    //Return the updated user object
-    uArgs := []string{userID, compID}
-    
-    return t.getUserInfo(stub, uArgs)
+
+    return nil, nil
 }
 
 func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
@@ -1111,7 +1112,6 @@ func (t *SimpleChaincode) getInvoiceIncidentList(stub shim.ChaincodeStubInterfac
 
 func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
     var returnMessage, invoiceIDStr, contractIDStr, planIDKey, totalCostStr, bankBalStr string
-    var userId, userCompId string
     var contractObj contract
     var planObj businessPlan
     var totalCost float64
@@ -1120,15 +1120,13 @@ func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] 
     var currentDate int
     
     fmt.Println("Pay for the contract (Invoice ID: "+ args[0] + ")")
-    if len(args) < 5 {
-        return nil, errors.New("Incorrect number of arguments. 5 expected (Invoice ID, Contract ID, Current Date in MilliSecs, User ID, User company ID)")
+    if len(args) < 3 {
+        return nil, errors.New("Incorrect number of arguments. 3 expected (Invoice ID, Contract ID, Current Date in MilliSecs)")
 	}
     
     invoiceIDStr = args[0]
     contractIDStr = args[1]
     currentDate, _ = strconv.Atoi(args[2])
-    userId = args[3]
-    userCompId = args[4]
     
     contractObjBytes, _ := stub.GetState(contractIDStr)
     _ = json.Unmarshal(contractObjBytes, &contractObj)
@@ -1187,10 +1185,7 @@ func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] 
     
     fmt.Println(invoiceObj)
     
-    //Return the updated user object
-    uArgs := []string{userId, userCompId}
-    
-    return t.getUserInfo(stub, uArgs)
+    return nil, nil
 }
     
 
