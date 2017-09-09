@@ -482,7 +482,7 @@ func (t *SimpleChaincode) topupBankBalance(stub shim.ChaincodeStubInterface, arg
     } 
 	
     //Return the updated user object
-    uArgs := []string{userId, compID}
+    uArgs := []string{userID, compID}
     
     return t.getUserInfo(stub, uArgs)
 }
