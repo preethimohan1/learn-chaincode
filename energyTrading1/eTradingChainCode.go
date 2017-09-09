@@ -445,20 +445,21 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 
 
 func (t *SimpleChaincode) topupBankBalance(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-	var compID string
+	var compID, userID string
     var topupDate int
 	var topupAmount float64
 	var companyObj company
     
     fmt.Println("Entered function topupBankBalance()")
     
-    if len(args) < 3 {
-        return nil, errors.New("Incorrect number of arguments. Expecting 2 arguments (CompanyID, top-up amount, top-up date).")
+    if len(args) < 4 {
+        return nil, errors.New("Incorrect number of arguments. Expecting 4 arguments (User ID, CompanyID, top-up amount, top-up date).")
 	}
 
-	compID = args[0]
-	topupAmount, _ = strconv.ParseFloat(args[1], 64)
-    topupDate, _ = strconv.Atoi(args[2])
+    userID = args[0]
+	compID = args[1]
+	topupAmount, _ = strconv.ParseFloat(args[2], 64)
+    topupDate, _ = strconv.Atoi(args[3])
     
     //Get the company object from DB
     compObjBytes, _ := stub.GetState(compID)
@@ -480,7 +481,10 @@ func (t *SimpleChaincode) topupBankBalance(stub shim.ChaincodeStubInterface, arg
         return nil, errors.New("Failed to save Company info")
     } 
 	
-	return nil, nil
+    //Return the updated user object
+    uArgs := []string{userId, compID}
+    
+    return t.getUserInfo(stub, uArgs)
 }
 
 func (t *SimpleChaincode) changePassword(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
@@ -1107,6 +1111,7 @@ func (t *SimpleChaincode) getInvoiceIncidentList(stub shim.ChaincodeStubInterfac
 
 func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
     var returnMessage, invoiceIDStr, contractIDStr, planIDKey, totalCostStr, bankBalStr string
+    var userId, userCompId string
     var contractObj contract
     var planObj businessPlan
     var totalCost float64
@@ -1115,13 +1120,15 @@ func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] 
     var currentDate int
     
     fmt.Println("Pay for the contract (Invoice ID: "+ args[0] + ")")
-    if len(args) < 3 {
-        return nil, errors.New("Incorrect number of arguments. 3 expected (Invoice ID, Contract ID, Current Date in MilliSecs)")
+    if len(args) < 5 {
+        return nil, errors.New("Incorrect number of arguments. 5 expected (Invoice ID, Contract ID, Current Date in MilliSecs, User ID, User company ID)")
 	}
     
     invoiceIDStr = args[0]
     contractIDStr = args[1]
     currentDate, _ = strconv.Atoi(args[2])
+    userId = args[3]
+    userCompId = args[4]
     
     contractObjBytes, _ := stub.GetState(contractIDStr)
     _ = json.Unmarshal(contractObjBytes, &contractObj)
@@ -1180,7 +1187,10 @@ func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] 
     
     fmt.Println(invoiceObj)
     
-    return nil, nil
+    //Return the updated user object
+    uArgs := []string{userId, userCompId}
+    
+    return t.getUserInfo(stub, uArgs)
 }
     
 
