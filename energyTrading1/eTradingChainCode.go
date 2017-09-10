@@ -1043,7 +1043,7 @@ func (t *SimpleChaincode) getIOTDataForShipper (stub shim.ChaincodeStubInterface
         }
     }
     
-    flowMeterFullListBytes, err1 := json.Marshal(flowMeterFullList)
+    flowMeterFullListBytes, _ := json.Marshal(flowMeterFullList)
     returnMessage = returnMessage + string(flowMeterFullListBytes)
     returnMessage = returnMessage + "}"
     
