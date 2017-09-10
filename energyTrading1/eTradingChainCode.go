@@ -994,6 +994,64 @@ func (t *SimpleChaincode) getIOTData (stub shim.ChaincodeStubInterface, args[] s
     
     return []byte(returnMessage), nil
 }
+
+func (t *SimpleChaincode) getIOTDataForShipper (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
+    fmt.Println("getIOTDataForShipper company ID: "+ args[0])
+    var companyID, returnMessage, arrKey string
+	var flowMeterList []flowMeterData
+    var flowMeterFullList []flowMeterData
+    var contractObjList []contract
+    companyID = args[0]
+    
+    returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : "
+    
+    //Get the IOT data from producers
+    contractObjList = t.getContractObjList(stub, tradeRequestKey, companyID)
+    for _, contractObj := range contractObjList {
+        //Get the flow meter data list for this company (Contract.Receiver ID)
+        arrKey = contractObj.ReceiverID + iotKeyAffix
+        flowMeterObjBytes, _ := stub.GetState(arrKey) 
+        if flowMeterObjBytes != nil {
+            _ = json.Unmarshal(flowMeterObjBytes, &flowMeterList)
+            flowMeterFullList = append(flowMeterFullList, flowMeterList...)
+        }
+    }
+    
+    //Get the IOT data from transporters
+    contractObjList = t.getContractObjList(stub, transportRequestKey, companyID)
+    for _, contractObj := range contractObjList {
+        //Get the flow meter data list for this company (Contract.Receiver ID)
+        arrKey = contractObj.ReceiverID + iotKeyAffix
+        flowMeterObjBytes, _ := stub.GetState(arrKey) 
+        if flowMeterObjBytes != nil {
+            _ = json.Unmarshal(flowMeterObjBytes, &flowMeterList)
+
+            flowMeterFullList = append(flowMeterFullList, flowMeterList...)
+        }
+    }
+    
+    //Get the IOT data from buyers
+    contractObjList = t.getContractObjList(stub, gasRequestKey, companyID)
+    for _, contractObj := range contractObjList {
+        //Get the flow meter data list for this company (Contract.Initiator ID)
+        arrKey = contractObj.InitiatorID + iotKeyAffix
+        flowMeterObjBytes, _ := stub.GetState(arrKey) 
+        if flowMeterObjBytes != nil {
+            _ = json.Unmarshal(flowMeterObjBytes, &flowMeterList)
+
+            flowMeterFullList = append(flowMeterFullList, flowMeterList...)
+        }
+    }
+    
+    flowMeterFullListBytes, err1 := json.Marshal(flowMeterFullList)
+    returnMessage = returnMessage + string(flowMeterFullListBytes)
+    returnMessage = returnMessage + "}"
+    
+    fmt.Println(flowMeterFullList)
+    fmt.Println(returnMessage)
+    
+    return []byte(returnMessage), nil
+}
     
 func (t *SimpleChaincode) getInvoiceList (stub shim.ChaincodeStubInterface, args[] string ) ([]byte, error) {
     fmt.Println("Getting list of invoices for company ID: " + args[0])
@@ -1271,6 +1329,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.getInvoiceList(stub, args)
     } else if function == "getIncidentList" {
 		return t.getIncidentList(stub, args)
+    } else if function == "getIOTDataForShipper" {
+		return t.getIOTDataForShipper(stub, args)
     }
     
 	fmt.Println("Query did not find func: " + function)
