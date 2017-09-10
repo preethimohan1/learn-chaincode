@@ -450,7 +450,7 @@ func (t *SimpleChaincode) verifyUser(stub shim.ChaincodeStubInterface, args []st
 
 
 func (t *SimpleChaincode) topupBankBalance(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
-	var compID, userID string
+	var compID string
     var topupDate int
 	var topupAmount float64
 	var companyObj company
