@@ -1273,8 +1273,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 
 	if function == "init" {
 		return t.Init(stub, "init", args)
-	} else if function == "write" {
-		return t.write(stub, args)
+	} else if function == "delete" {
+		return t.deleteData(stub, args)
 	} else if function == "register" {
 		return t.register(stub, args)
 	} else if function == "createTradeRequest" {
@@ -1371,4 +1371,23 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
         return nil, errors.New(jsonResp)
     }
     return valAsbytes, nil
+}
+
+func (t *SimpleChaincode) deleteData(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+    var key string
+	if len(args) != 1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 1")
+	}
+    
+    key = args[0]
+    
+    fmt.Println("Deleting data with key:" + key)
+
+	// Delete the key from the state in ledger
+	err := stub.DelState(key)
+	if err != nil {
+		return nil, errors.New("Failed to delete state")
+	}
+
+	return nil, nil
 }
