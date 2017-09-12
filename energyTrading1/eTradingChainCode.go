@@ -124,7 +124,7 @@ func main() {
 	
 }
 
-func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) ([]byte, error) {
+func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, functionName string, args []string) ([]byte, error) {
     //Initialize master keys list
     masterKeyList := []string{companyKey, tradeRequestKey, transportRequestKey, gasRequestKey, planKey, 
                               "buyer"+ userIDAffix, "shipper"+ userIDAffix, "producer"+ userIDAffix, "transporter"+ userIDAffix,
@@ -227,7 +227,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) ([]byte, error)
     
     masterKeyList = append(masterKeyList, bpIDList...)
     
-    updateMasterKeyList (stub, masterKeyList)
+    t.updateMasterKeyList (stub, masterKeyList)
 	return nil, nil
 }
 
@@ -1345,7 +1345,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	fmt.Println("Running Invoke function")
 
 	if function == "init" {
-		return t.Init(stub)
+		return t.Init(stub, "init", args)
 	} else if function == "delete" {
 		return t.deleteData(stub, args)
 	} else if function == "register" {
