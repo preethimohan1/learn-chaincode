@@ -15,6 +15,7 @@ var tradeRequestKey = "TRADEREQUESTIDLIST"
 var transportRequestKey = "TRANSPORTREQUESTIDLIST"
 var gasRequestKey = "GASREQUESTIDLIST"
 var planKey = "PLANIDLIST"
+var allKeys = "ALLKEYS"
 
 var userIDAffix = "_USERLIST"    //<CompanyType>_USERLIST
 var planIDAffix = "_PLAN"      // <CompanyID>_PLAN
@@ -123,7 +124,12 @@ func main() {
 	
 }
 
-func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) ([]byte, error) {
+    //Initialize master keys list
+    masterKeyList := []string{companyKey, tradeRequestKey, transportRequestKey, gasRequestKey, planKey, 
+                              "buyer"+ userIDAffix, "shipper"+ userIDAffix, "producer"+ userIDAffix, "transporter"+ userIDAffix,
+                             "BUYER1"+ iotKeyAffix, "BUYER2"+ iotKeyAffix, "PRODUCER1"+ iotKeyAffix, "PRODUCER2"+ iotKeyAffix, "TRANSPORTER1"+ iotKeyAffix, "TRANSPORTER2" + iotKeyAffix, "TRANSPORTER3" + iotKeyAffix}
+    
     var currentDate int
     currentDate = 0
     
@@ -156,6 +162,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     t.addCompany (stub, compIDArr, "TRANSPORTER3", "Transporter", "Gasunie DTS", "Europe", 100000, currentDate)
     compIDArr = append(compIDArr, "TRANSPORTER3")
     
+    masterKeyList = append(masterKeyList, compIDArr...)
     
 	//create default users
 	var userIDArr UserIDList
@@ -181,6 +188,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     t.addUser(stub, userIDArr, "transporter3", "transporter3", "TRANSPORTER3", "Transporter")
     userIDArr = append(userIDArr, "transporter3")
 	
+    masterKeyList = append(masterKeyList, userIDArr...)
     
     //Create business plans
     var planID string
@@ -217,8 +225,45 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     t.createBusinessPlan(stub, bpIDList, planID, currentDateStr, 8.0, "Ellund", 350, "Steinitz", 175, "TRANSPORTER3")
     bpIDList = append(bpIDList, planID)
     
+    masterKeyList = append(masterKeyList, bpIDList...)
+    
+    updateMasterKeyList (stub, masterKeyList)
 	return nil, nil
 }
+
+func (t *SimpleChaincode) updateMasterKeyList(stub shim.ChaincodeStubInterface, keys []string) ([]byte, error) {
+    var masterKeyList []string
+    
+    //Get the existing master array of keys
+    keyListBytes, _ := stub.GetState(allKeys)
+    if keyListBytes != nil
+	   _ = json.Unmarshal(keyListBytes, &masterKeyList)
+    
+    //If the key already exists in the master list, then return to avoid duplicates
+    if(len(keys) == 1 && contains(masterKeyList, keys[0]) ) {
+        return nil, nil
+    }
+    
+    //Append the new key to the master array
+    masterKeyList = append(masterKeyList, keys...)
+    keyListBytes, err := json.Marshal(masterKeyList)
+    _ = stub.PutState(allKeys, keyListBytes)  
+    
+    return nil, nil
+}
+
+func (t *SimpleChaincode) getMasterKeyList(stub shim.ChaincodeStubInterface) ([]byte, error) {
+    var masterKeyList []string
+    
+    //Get the existing master array of keys
+    keyListBytes, _ := stub.GetState(allKeys)
+    if keyListBytes != nil
+	   _ = json.Unmarshal(keyListBytes, &masterKeyList)
+    
+    
+    return []byte(masterKeyList), nil
+}
+
 
 func (t *SimpleChaincode) addCompany (stub shim.ChaincodeStubInterface, compIDArr CompanyIDList, compID string, 
 				       compType string, compName string, compLoc string, bankBalance float64,  balanceDate int) bool {
@@ -306,7 +351,7 @@ func (t *SimpleChaincode) addUser (stub shim.ChaincodeStubInterface, userIDArr U
 	if err2 != nil {
 		fmt.Println(err2)
 	}
-        
+    
     //Add the user IDs into array of user types
     var arrKey = strings.ToLower(compType) + userIDAffix
     userIDArr = append(userIDArr, userName)
@@ -341,7 +386,11 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
     _ = json.Unmarshal(userArrObj, &userArr)
     
     t.addUser (stub, userArr, userName, password, companyObj.CompanyID, companyObj.CompanyType )
-    	
+        
+    //Add new username to master key list
+    uList := []string{userName}
+    t.updateMasterKeyList(stub, uList)
+    
 	return nil, nil
 
 }
@@ -547,7 +596,7 @@ func (t *SimpleChaincode) createBusinessPlan(stub shim.ChaincodeStubInterface, b
     return nil, nil
 }
 
-func (t *SimpleChaincode) getBusinessPlanList(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) getBusinessPlanList(stub shim.ChaincodeStubInterface) ([]byte, error) {
 	var lenArr int
 	var bpIDArr BusinessPlanIDList
 	var returnMessage string
@@ -658,6 +707,10 @@ func (t *SimpleChaincode) createContract(stub shim.ChaincodeStubInterface, idArr
     _ = stub.PutState(idArrKey, contractIDListObjBytes)
     
     fmt.Println(contractIDArr)
+    
+    //Add new contractID to master key list
+    idList := []string{contractIDString, contractIDString + invoiceAffix, contractIDString + incidentAffix}
+    t.updateMasterKeyList(stub, idList)
     
 	return nil, nil
 }
@@ -923,6 +976,10 @@ func (t *SimpleChaincode) createInvoice (stub shim.ChaincodeStubInterface, invoi
 	}
 	_ = stub.PutState(invoiceIDStr, invoiceObjBytes)
     
+    //Add new invoiceID to master key list
+    idList := []string{invoiceIDStr}
+    t.updateMasterKeyList(stub, idList)
+    
     //Add invoice id into contract's invoice list
     var arrKey = contractIDStr+invoiceAffix
     invoiceIDListObjBytes, err2 := stub.GetState(arrKey)
@@ -959,6 +1016,10 @@ func (t *SimpleChaincode) createIncident (stub shim.ChaincodeStubInterface, inci
 		return nil, err1
 	}
 	_ = stub.PutState(incidentIDStr, incidentObjBytes)
+    
+    //Add new incidentID to master key list
+    idList := []string{incidentIDStr}
+    t.updateMasterKeyList(stub, idList)
     
     //Add incident id into contract's incident list
     var arrKey = contractIDStr+incidentAffix
@@ -1001,6 +1062,7 @@ func (t *SimpleChaincode) getIOTDataForShipper (stub shim.ChaincodeStubInterface
 	var flowMeterList []flowMeterData
     var flowMeterFullList []flowMeterData
     var contractObjList []contract
+    
     companyID = args[0]
     
     returnMessage = "{\"statusCode\" : \"SUCCESS\", \"body\" : "
@@ -1245,26 +1307,35 @@ func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] 
     
     return nil, nil
 }
+
+func (t *SimpleChaincode) Reset(stub shim.ChaincodeStubInterface) ([]byte, error) {
+    var masterKeyList []string
     
-
-func testEqualSlice (a []byte, b []byte) bool {
-
-	if a == nil && b == nil { 
-        return true
-    } else if a == nil || b == nil { 
-        return false
-    } 
-	
-	if len(a) != len(b) {
-        return false
-    }
-
-    for i := range a {
-        if a[i] != b[i] {
-            return false
+    //Get the existing master array of keys
+    keyListBytes, _ := stub.GetState(allKeys)
+    if keyListBytes != nil
+	   _ = json.Unmarshal(keyListBytes, &masterKeyList)
+    
+	for _, key := range masterKeyList {
+        fmt.Println("Deleting data with key: " + key)
+        err := stub.DelState(key)
+        if err != nil {
+            fmt.Println(err)
         }
     }
-    return true
+    
+    t.Init(stub)
+
+	return nil, nil
+}
+    
+func contains(s []string, e string) bool {
+    for _, a := range s {
+        if a == e {
+            return true
+        }
+    }
+    return false
 }
 
 // Invoke isur entry point to invoke a chaincode function
@@ -1272,7 +1343,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	fmt.Println("Running Invoke function")
 
 	if function == "init" {
-		return t.Init(stub, "init", args)
+		return t.Init(stub)
 	} else if function == "delete" {
 		return t.deleteData(stub, args)
 	} else if function == "register" {
@@ -1295,7 +1366,10 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.addIOTData(stub, args)
 	} else if function == "makePayment" {
 		return t.makePayment(stub, args)
+	} else if function == "reset" {
+		return t.Reset(stub)
 	} 
+    
  
 	fmt.Println("Invoke did not find function:" + function)
 
@@ -1322,7 +1396,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
     } else if function == "getGasRequestList" {
 		return t.getGasRequestList(stub, args)
     } else if function == "getBusinessPlanList" {
-		return t.getBusinessPlanList(stub, args)
+		return t.getBusinessPlanList(stub)
     } else if function == "getIOTData" {
 		return t.getIOTData(stub, args)
     } else if function == "getInvoiceList" {
@@ -1331,7 +1405,9 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.getIncidentList(stub, args)
     } else if function == "getIOTDataForShipper" {
 		return t.getIOTDataForShipper(stub, args)
-    }
+    } else if function == "getMasterKeyList" {
+		return t.getMasterKeyList(stub)
+	} 
     
 	fmt.Println("Query did not find func: " + function)
 
