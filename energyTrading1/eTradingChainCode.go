@@ -258,9 +258,9 @@ func (t *SimpleChaincode) getMasterKeyList(stub shim.ChaincodeStubInterface) ([]
     
     //Get the existing master array of keys
     keyListBytes, _ := stub.GetState(allKeys)
-    if keyListBytes != nil
+    if keyListBytes != nil {
 	   _ = json.Unmarshal(keyListBytes, &masterKeyList)
-    
+    }
     
     return []byte(masterKeyList), nil
 }
