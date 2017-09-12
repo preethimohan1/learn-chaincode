@@ -1314,8 +1314,9 @@ func (t *SimpleChaincode) Reset(stub shim.ChaincodeStubInterface) ([]byte, error
     
     //Get the existing master array of keys
     keyListBytes, _ := stub.GetState(allKeys)
-    if keyListBytes != nil
+    if keyListBytes != nil {
 	   _ = json.Unmarshal(keyListBytes, &masterKeyList)
+    }
     
 	for _, key := range masterKeyList {
         fmt.Println("Deleting data with key: " + key)
