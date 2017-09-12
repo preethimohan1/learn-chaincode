@@ -369,6 +369,14 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
 	}
 	
 	userName = args[0]
+    
+    //Check if the user already exists
+    userObj, _ := stub.GetState(userName)
+    if userObj != nil {
+        fmt.Println(userObj)
+        return nil, errors.New("User registration failed. Username already exists: " + userName)
+    }
+    
 	password = args[1]
 	companyJsonString = args[2]
 	err := json.Unmarshal([]byte(companyJsonString), &companyObj)
