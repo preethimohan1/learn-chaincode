@@ -126,9 +126,9 @@ func main() {
 
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface) ([]byte, error) {
     //Initialize master keys list
-    masterKeyList := []string{companyKey, tradeRequestKey, transportRequestKey, gasRequestKey, planKey, 
+    var masterKeyList = [companyKey, tradeRequestKey, transportRequestKey, gasRequestKey, planKey, 
                               "buyer"+ userIDAffix, "shipper"+ userIDAffix, "producer"+ userIDAffix, "transporter"+ userIDAffix,
-                             "BUYER1"+ iotKeyAffix, "BUYER2"+ iotKeyAffix, "PRODUCER1"+ iotKeyAffix, "PRODUCER2"+ iotKeyAffix, "TRANSPORTER1"+ iotKeyAffix, "TRANSPORTER2" + iotKeyAffix, "TRANSPORTER3" + iotKeyAffix}
+                             "BUYER1"+ iotKeyAffix, "BUYER2"+ iotKeyAffix, "PRODUCER1"+ iotKeyAffix, "PRODUCER2"+ iotKeyAffix, "TRANSPORTER1"+ iotKeyAffix, "TRANSPORTER2" + iotKeyAffix, "TRANSPORTER3" + iotKeyAffix]
     
     var currentDate int
     currentDate = 0
@@ -236,8 +236,9 @@ func (t *SimpleChaincode) updateMasterKeyList(stub shim.ChaincodeStubInterface, 
     
     //Get the existing master array of keys
     keyListBytes, _ := stub.GetState(allKeys)
-    if keyListBytes != nil
+    if keyListBytes != nil {
 	   _ = json.Unmarshal(keyListBytes, &masterKeyList)
+    }
     
     //If the key already exists in the master list, then return to avoid duplicates
     if(len(keys) == 1 && contains(masterKeyList, keys[0]) ) {
