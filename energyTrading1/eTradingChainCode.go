@@ -247,8 +247,8 @@ func (t *SimpleChaincode) updateMasterKeyList(stub shim.ChaincodeStubInterface, 
     
     //Append the new key to the master array
     masterKeyList = append(masterKeyList, keys...)
-    keyListBytes, _ := json.Marshal(masterKeyList)
-    _ = stub.PutState(allKeys, keyListBytes)  
+    keyListBytes1, _ := json.Marshal(masterKeyList)
+    _ = stub.PutState(allKeys, keyListBytes1)  
     
     return nil, nil
 }
