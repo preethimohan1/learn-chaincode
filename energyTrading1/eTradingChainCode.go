@@ -254,15 +254,10 @@ func (t *SimpleChaincode) updateMasterKeyList(stub shim.ChaincodeStubInterface, 
 }
 
 func (t *SimpleChaincode) getMasterKeyList(stub shim.ChaincodeStubInterface) ([]byte, error) {
-    var masterKeyList []string
-    
     //Get the existing master array of keys
     keyListBytes, _ := stub.GetState(allKeys)
-    if keyListBytes != nil {
-	   _ = json.Unmarshal(keyListBytes, &masterKeyList)
-    }
     
-    return []byte(masterKeyList), nil
+    return keyListBytes, nil
 }
 
 
@@ -1326,7 +1321,7 @@ func (t *SimpleChaincode) Reset(stub shim.ChaincodeStubInterface) ([]byte, error
         }
     }
     
-    t.Init(stub)
+    t.Init(stub, "init", nil)
 
 	return nil, nil
 }
