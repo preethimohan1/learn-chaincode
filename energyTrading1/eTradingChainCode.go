@@ -1239,7 +1239,7 @@ func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] 
     var contractObj contract
     var planObj businessPlan
     var totalCost float64
-    var initiatorCompany, receiverCompany company
+    var initiatorCompany company
     var invoiceObj invoice
     var currentDate int
     
@@ -1266,36 +1266,40 @@ func (t *SimpleChaincode) makePayment (stub shim.ChaincodeStubInterface, args[] 
     //Fetch Initiator company
     initiatorCompanyObjBytes, _ := stub.GetState(contractObj.InitiatorID)
     _ = json.Unmarshal(initiatorCompanyObjBytes, &initiatorCompany)
-    
+
     //Subtract amount from initiator company
     if (initiatorCompany.BankBalance < totalCost) {
         totalCostStr = strconv.FormatFloat(totalCost, 'E', -1, 64)
         bankBalStr = strconv.FormatFloat(initiatorCompany.BankBalance, 'E', -1, 64)
         returnMessage = "{\"statusCode\" : \"FAIL\", \"body\" : \"Transaction FAILED: Insufficient funds (Bank Balance: "+ bankBalStr +", Invoice payment amount: "+totalCostStr+")\"}"
-        
+
         return []byte(returnMessage), nil
     } else {
         initiatorCompany.BankBalance = initiatorCompany.BankBalance - totalCost
         initiatorCompany.BalanceUpdatedDateMS = currentDate
         initiatorCompanyObjBytes, _ = json.Marshal(&initiatorCompany)
         _ = stub.PutState(initiatorCompany.CompanyID, initiatorCompanyObjBytes)
-        
+
         fmt.Println(initiatorCompany)
     }
     
     
-    //Add the amount to Receiver company
-    receiverCompanyObjBytes, _ := stub.GetState(contractObj.ReceiverID)
-    _ = json.Unmarshal(receiverCompanyObjBytes, &receiverCompany)
-    
-    receiverCompany.BankBalance = receiverCompany.BankBalance + totalCost
-    receiverCompany.BalanceUpdatedDateMS = currentDate
-    
-    receiverCompanyObjBytes, _ = json.Marshal(&receiverCompany)
-    _ = stub.PutState(receiverCompany.CompanyID, receiverCompanyObjBytes)
-    
-    fmt.Println(receiverCompany)
-    
+    go func (addAmount float64) {
+        var receiverCompany company
+        
+        //Add the amount to Receiver company
+        receiverCompanyObjBytes, _ := stub.GetState(contractObj.ReceiverID)
+        _ = json.Unmarshal(receiverCompanyObjBytes, &receiverCompany)
+
+        receiverCompany.BankBalance = receiverCompany.BankBalance + addAmount
+        receiverCompany.BalanceUpdatedDateMS = currentDate
+
+        receiverCompanyObjBytes, _ = json.Marshal(&receiverCompany)
+        _ = stub.PutState(receiverCompany.CompanyID, receiverCompanyObjBytes)
+
+        fmt.Println(receiverCompany)
+
+    } (totalCost)
     
     //Update the invoice payment status and date
     invoiceObjBytes, _ := stub.GetState(invoiceIDStr)
